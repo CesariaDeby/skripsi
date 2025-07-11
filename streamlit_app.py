@@ -125,7 +125,3 @@ if uploaded_file:
 else:
     st.info("Silakan unggah file Excel (.xlsx) yang berisi data perceraian.")
 
-
-
-st.set_page_config(layout="wide")
-st.title("Aplikasi Pengelompokan Wilayah Berdasarkan Capaian Pengelolaan Sampah")
