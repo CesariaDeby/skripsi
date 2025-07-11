@@ -15,3 +15,4 @@ st.title("💔 Aplikasi Pengelompokan Kabupaten/Kota Jawa Timur Berdasarkan Fakt
 st.markdown("### Upload Dataset")
 
 uploaded_file = st.file_uploader("Unggah file Excel (.xlsx)", type="xlsx")
+streamlit run streamlit_app.py
