@@ -11,7 +11,6 @@ from sklearn.metrics import silhouette_score, silhouette_samples, davies_bouldin
 from scipy.signal import find_peaks
 import matplotlib.patches as mpatches
 import matplotlib.patheffects as path_effects
-from shapely.geometry import Point
 from sklearn.decomposition import PCA
 import warnings
 
