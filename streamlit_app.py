@@ -9,6 +9,11 @@ from sklearn.cluster import OPTICS
 from sklearn.neighbors import NearestNeighbors
 from sklearn.metrics import silhouette_score, silhouette_samples, davies_bouldin_score
 from scipy.signal import find_peaks
+import geopandas as gpd
+import matplotlib.patches as mpatches
+import matplotlib.patheffects as path_effects
+from shapely.geometry import Point
+from sklearn.decomposition import PCA
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -155,3 +160,159 @@ if uploaded_file:
 
 else:
     st.info("Silakan unggah file Excel terlebih dahulu.")
+# Assumsi: Data telah tersedia di variabel berikut:
+# df: DataFrame dengan kolom 'wilayah' dan fitur-fitur
+# X_std: Hasil standardisasi dari data numerik
+# labels_op: Hasil label klaster dari OPTICS
+# selected_features: daftar nama fitur yang digunakan
+# n_clusters, n_noise, actual_silhouette, min_samples, xi, min_cluster_size, ordering, reachability, core_distances, cluster_counts tersedia
+
+# ===============================
+# STREAMLIT APP STARTS HERE
+# ===============================
+st.set_page_config(layout="wide")
+st.title("Analisis Klaster Perceraian di Jawa Timur dengan OPTICS")
+
+# PHASE 6: SUMMARY & NEXT STEPS
+st.header("\U0001F4CC Ringkasan Hasil & Langkah Selanjutnya")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.subheader("\U0001F4CA Ringkasan Hasil Akhir")
+    st.markdown(f"- Jumlah klaster: **{n_clusters}**")
+    st.markdown(f"- Titik noise: **{n_noise}**")
+    st.markdown(f"- Cakupan data: **{((len(labels_op) - n_noise) / len(labels_op) * 100):.1f}%**")
+    if actual_silhouette:
+        st.markdown(f"- Silhouette Score: **{actual_silhouette:.3f}**")
+    else:
+        st.warning("Silhouette Score tidak dapat dihitung.")
+
+with col2:
+    st.subheader("⚙️ Parameter OPTICS")
+    st.markdown(f"- `min_samples`: {min_samples}")
+    st.markdown(f"- `xi`: {xi}")
+    st.markdown(f"- `min_cluster_size`: {min_cluster_size}")
+
+st.markdown("---")
+
+# PHASE 7: CLUSTER INTERPRETATION
+st.header("🔍 Interpretasi Karakteristik Klaster")
+df_std = pd.DataFrame(X_std, columns=selected_features)
+df_std['cluster'] = labels_op
+
+def analyze_cluster_characteristics(df_std, top_n=3):
+    cluster_stats = {}
+    unique_labels = df_std['cluster'].unique()
+    overall_means = df_std.drop(columns='cluster').mean()
+
+    for label in sorted(unique_labels):
+        cluster_data = df_std[df_std['cluster'] == label]
+        cluster_means = cluster_data.drop(columns='cluster').mean()
+
+        dominant_features = []
+        for feature in cluster_means.index:
+            if overall_means[feature] != 0 and cluster_means[feature] > overall_means[feature]:
+                ratio = cluster_means[feature] / overall_means[feature]
+                dominant_features.append((feature, ratio))
+
+        dominant_features.sort(key=lambda x: x[1], reverse=True)
+
+        if dominant_features:
+            top_feature = dominant_features[0][0]
+            name_map = {
+                'ekonomi': 'Faktor Ekonomi Dominan',
+                'perselisihan dan pertengkaran': 'Perselisihan sebagai Faktor Utama',
+                'KDRT': 'Kekerasan dalam Rumah Tangga',
+                'meninggalkan salah satu pihak': 'Dominansi Faktor Meninggalkan',
+                'zina': 'Dominansi Zina / Perselingkuhan'
+            }
+            cluster_name = name_map.get(top_feature, f'Dominasi {top_feature}')
+        else:
+            cluster_name = "Tidak Ada Dominansi Jelas"
+
+        cluster_stats[label] = {
+            'name': cluster_name,
+            'size': len(cluster_data),
+            'percentage': (len(cluster_data) / len(df_std)) * 100
+        }
+
+    return cluster_stats
+
+cluster_stats = analyze_cluster_characteristics(df_std)
+
+# PHASE 8: PCA SCATTER PLOT
+st.header("\U0001F4CD Visualisasi Scatter Plot (PCA)")
+pca = PCA(n_components=2)
+X_plot = pca.fit_transform(X_std)
+
+unique_labels = sorted(df_std['cluster'].unique())
+cluster_labels = sorted(label for label in unique_labels if label != -1)
+colors = plt.cm.tab10(np.linspace(0, 1, 10))
+label_to_color = {-1: 'black'}
+for i, label in enumerate(cluster_labels):
+    label_to_color[label] = colors[i % 10]
+
+fig_pca, ax_pca = plt.subplots(figsize=(12, 7))
+for label in unique_labels:
+    mask = df_std['cluster'] == label
+    color = label_to_color[label]
+    label_text = "Noise" if label == -1 else f"Cluster {label}"
+    ax_pca.scatter(X_plot[mask, 0], X_plot[mask, 1], c=[color], label=label_text,
+                   s=90 if label != -1 else 70, alpha=0.85, edgecolor='black', linewidth=0.5)
+ax_pca.set_title("2D PCA Scatter Plot (OPTICS)", fontsize=14)
+ax_pca.set_xlabel("PCA Komponen 1")
+ax_pca.set_ylabel("PCA Komponen 2")
+ax_pca.legend()
+ax_pca.grid(True, linestyle='--', alpha=0.3)
+st.pyplot(fig_pca)
+
+# PHASE 9: PETA WILAYAH JAWA TIMUR
+st.header("🚨 Peta Kabupaten/Kota Berdasarkan Klaster")
+df['cluster'] = df_std['cluster']
+df['wilayah'] = df['wilayah'].str.upper().str.strip()
+gdf = gpd.read_file("BATAS KABUPATEN KOTA DESEMBER 2019 DUKCAPIL.shp")
+gdf['KAB_KOTA'] = gdf['KAB_KOTA'].str.upper().str.strip()
+
+wilayah_jatim = [
+    'PACITAN', 'TRENGGALEK', 'KEDIRI', 'MALANG', 'SITUBONDO',
+    'MOJOKERTO', 'MADIUN', 'NGAWI', 'BOJONEGORO', 'TUBAN', 'LAMONGAN',
+    'BANGKALAN', 'SUMENEP', 'KOTA KEDIRI', 'KOTA MALANG', 'PONOROGO',
+    'JEMBER', 'BANYUWANGI', 'BONDOWOSO', 'GRESIK', 'KOTA PASURUAN',
+    'PROBOLINGGO', 'PASURUAN', 'SIDOARJO', 'JOMBANG', 'MAGETAN',
+    'SAMPANG', 'PAMEKASAN', 'KOTA PROBOLINGGO', 'KOTA SURABAYA',
+    'TULUNGAGUNG', 'BLITAR', 'LUMAJANG', 'NGANJUK', 'KOTA MADIUN'
+]
+gdf_jatim = gdf[gdf['KAB_KOTA'].isin(wilayah_jatim)]
+
+jatim_clustered = gdf_jatim.merge(
+    df[['wilayah', 'cluster']],
+    left_on='KAB_KOTA',
+    right_on='wilayah',
+    how='left'
+)
+
+cluster_colors = {
+    -1: '#000000',
+     0: '#F94144',
+     1: '#F9C74F',
+     2: '#43AA8B',
+     3: '#577590'
+}
+
+jatim_clustered['warna'] = jatim_clustered['cluster'].map(cluster_colors)
+fig_map, ax_map = plt.subplots(figsize=(14, 14))
+
+jatim_clustered.plot(
+    color=jatim_clustered['warna'],
+    edgecolor='white', linewidth=0.8, ax=ax_map
+)
+
+ax_map.set_title("Peta Kabupaten/Kota di Jawa Timur Berdasarkan Klaster", fontsize=16)
+ax_map.axis('off')
+st.pyplot(fig_map)
+
+# SIMPAN PETA DENGAN BACKGROUND TRANSPARAN
+fig_map.savefig('peta_jatim_transparan.png',
+                facecolor='none', edgecolor='none', bbox_inches='tight',
+                pad_inches=0.1, transparent=True, dpi=300)
