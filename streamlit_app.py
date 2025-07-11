@@ -3,16 +3,10 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from scipy.stats import skew
-import warnings
+from sklearn.preprocessing import RobustScaler
+from sklearn.cluster import MeanShift
+from sklearn.metrics import davies_bouldin_score, silhouette_score
+from mpl_toolkits.mplot3d import Axes3D
 
-warnings.filterwarnings("ignore")
-
-st.set_page_config(layout="wide", page_title="Clustering Perceraian", page_icon="💔")
-
-# 1. Judul dan Upload Data
-st.title("💔 Aplikasi Pengelompokan Kabupaten/Kota Jawa Timur Berdasarkan Faktor Penyebab Perceraian")
-st.markdown("### Upload Dataset")
-
-uploaded_file = st.file_uploader("Unggah file Excel (.xlsx)", type="xlsx")
-streamlit run streamlit_app.py
+st.set_page_config(layout="wide")
+st.title("Aplikasi Pengelompokan Wilayah Berdasarkan Capaian Pengelolaan Sampah")
