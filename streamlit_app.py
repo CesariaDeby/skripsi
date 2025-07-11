@@ -125,14 +125,18 @@ if uploaded_file:
     # DEFINISI VARIABEL TAMBAHAN UNTUK PHASE 6
     # ================================
 
-    # Hitung jumlah klaster dan noise
+    # Hitung informasi penting
     n_clusters = len(set(labels_op)) - (1 if -1 in labels_op else 0)
     n_noise = np.sum(labels_op == -1)
+    cluster_counts = pd.Series(labels_op).value_counts().to_dict()
     
-    # Hitung silhouette score jika valid
-    actual_silhouette = silhouette_score(X_std[labels_op != -1], labels_op[labels_op != -1]) \
-        if n_clusters > 1 else None
-    
+    # Simpan silhouette score jika memungkinkan
+    valid_mask = labels_op != -1
+    if valid_mask.sum() >= 2:
+        actual_silhouette = silhouette_score(X_std[valid_mask], labels_op[valid_mask])
+    else:
+        actual_silhouette = None
+
     # Ambil parameter terbaik dari hasil grid search
     min_samples = param['min_samples']
     xi = param['xi']
