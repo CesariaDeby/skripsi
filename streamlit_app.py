@@ -1,58 +1,72 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import OPTICS
 from sklearn.metrics import silhouette_score
 from scipy.stats import skew
-from scipy.signal import find_peaks
-import matplotlib.patches as mpatches
+import warnings
 
+warnings.filterwarnings("ignore")
+
+# ===================================
+# Konfigurasi Tampilan
+# ===================================
 st.set_page_config(layout="wide", page_title="Clustering Perceraian", page_icon="💔")
-
-# ================================
-# Sidebar Navigasi & Styling
-# ================================
 st.markdown("""
     <style>
     section[data-testid="stSidebar"] {
-        background-color: #F0F5F9 !important;
+        background-color: #FFE4E1 !important;
+        color: black !important;
     }
     .custom-title {
-        font-family: 'Arial Black';
+        font-family: 'Georgia', serif;
         font-size: 20px;
-        color: #0D3B66;
-        margin-bottom: 20px;
+        font-weight: bold;
+        display: block;
+        color: black !important;
+    }
+    .move-down {
+        margin-top: 60px;
     }
     </style>
 """, unsafe_allow_html=True)
 
+# ===================================
+# Sidebar & Navigasi
+# ===================================
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/3659/3659730.png", width=100)
-    st.markdown("<div class='custom-title'>Clustering Perceraian</div>", unsafe_allow_html=True)
-    menu = st.radio("Navigasi", ["Beranda", "Upload & Preprocessing", "Clustering OPTICS", "Ringkasan"])
+    col1, col2 = st.columns([3, 2])
+    with col1:
+        st.image("https://raw.githubusercontent.com/awalidya/TugasAkhir/main/logo%20sampah.png", width=140)
+    with col2:
+        st.markdown("<span class='custom-title move-down'>Clustering Perceraian</span>", unsafe_allow_html=True)
 
-# ================================
-# Tab: Beranda
-# ================================
-if menu == "Beranda":
+    menu = ["Beranda", "Upload Data", "Clustering", "Ringkasan"]
+    selected = st.radio("Navigasi", menu)
+
+# ===================================
+# Halaman: Beranda
+# ===================================
+if selected == "Beranda":
     st.title("💔 Clustering Faktor Perceraian di Kabupaten/Kota")
     st.markdown("""
-    Aplikasi ini bertujuan untuk mengelompokkan wilayah berdasarkan faktor penyebab perceraian menggunakan algoritma OPTICS.
-    Anda dapat mengunggah data, menangani outlier, memilih parameter, dan menampilkan visualisasi interaktif.
+    Aplikasi ini dirancang untuk mengelompokkan kabupaten/kota berdasarkan faktor penyebab perceraian menggunakan algoritma OPTICS. 
+    Anda dapat mengunggah data, melakukan preprocessing, dan melakukan clustering serta meninjau hasil pengelompokannya.
     """)
 
-# ================================
-# Tab: Upload & Preprocessing
-# ================================
-elif menu == "Upload & Preprocessing":
-    st.title("📂 Upload & Pra-pemrosesan")
+# ===================================
+# Halaman: Upload Data
+# ===================================
+elif selected == "Upload Data":
+    st.title("📤 Upload & Preprocessing Data")
     uploaded_file = st.file_uploader("Unggah file Excel (.xlsx)", type="xlsx")
 
     if uploaded_file:
         df = pd.read_excel(uploaded_file)
+
         df.rename(columns={
             'Kabupaten/Kota': 'wilayah',
             'Fakor Perceraian - Perselisihan dan Pertengkaran Terus Menerus': 'perselisihan dan pertengkaran',
@@ -65,101 +79,90 @@ elif menu == "Upload & Preprocessing":
         selected_features = ['perselisihan dan pertengkaran', 'ekonomi', 'KDRT', 'meninggalkan salah satu pihak', 'zina']
         df = df[df['Jumlah Cerai'] > 0].copy()
         df.fillna(0, inplace=True)
-
         for col in selected_features:
             df[col] = df[col] / df['Jumlah Cerai']
 
         df_prop = df[selected_features].copy()
-        st.session_state.df_prop = df_prop
-        st.session_state.wilayah = df['wilayah']
+        st.subheader("🔢 Data Proporsi Faktor Perceraian")
+        st.dataframe(df[['wilayah'] + selected_features].set_index('wilayah'))
 
-        st.subheader("📊 Distribusi & Outlier")
-        tab1, tab2 = st.tabs(["Distribusi", "Boxplot"])
+        st.subheader("📊 Distribusi dan Outlier")
+        fig, axs = plt.subplots(2, 3, figsize=(16, 8))
+        for i, col in enumerate(selected_features):
+            ax = axs[i // 3][i % 3]
+            sns.histplot(df_prop[col], kde=True, bins=20, ax=ax)
+            ax.set_title(f"{col}\nSkewness: {skew(df_prop[col]):.2f}")
+        st.pyplot(fig)
 
-        with tab1:
-            fig, axs = plt.subplots(2, 3, figsize=(16, 8))
-            for i, col in enumerate(selected_features):
-                ax = axs[i // 3][i % 3]
-                sns.histplot(df_prop[col], kde=True, ax=ax)
-                ax.set_title(f"{col}\nSkewness: {skew(df_prop[col]):.2f}")
-            st.pyplot(fig)
-
-        with tab2:
-            fig, axs = plt.subplots(2, 3, figsize=(16, 8))
-            for i, col in enumerate(selected_features):
-                ax = axs[i // 3][i % 3]
-                sns.boxplot(y=df_prop[col], ax=ax)
-                ax.set_title(f"Boxplot: {col}")
-            st.pyplot(fig)
-
-        st.subheader("🔄 Winsorization")
+        # Winsorization
         Q1 = df_prop.quantile(0.25)
         Q3 = df_prop.quantile(0.75)
         IQR = Q3 - Q1
-        for col in selected_features:
+        for col in df_prop.columns:
             lower = Q1[col] - 1.5 * IQR[col]
             upper = Q3[col] + 1.5 * IQR[col]
-            df_prop[col] = np.clip(df_prop[col], lower, upper)
+            df_prop[col] = np.where(df_prop[col] < lower, lower, df_prop[col])
+            df_prop[col] = np.where(df_prop[col] > upper, upper, df_prop[col])
+
         st.session_state.df_prop = df_prop
-        st.success("Outlier berhasil ditangani dengan Winsorization")
+        st.success("Data berhasil diproses dan disimpan.")
 
-# ================================
-# Tab: Clustering OPTICS
-# ================================
-elif menu == "Clustering OPTICS":
-    st.title("💡 Clustering dengan OPTICS")
-
+# ===================================
+# Halaman: Clustering
+# ===================================
+elif selected == "Clustering":
+    st.title("🔍 Clustering dengan OPTICS")
     if 'df_prop' in st.session_state:
         df_prop = st.session_state.df_prop
+        X = df_prop.values
+        scaler = StandardScaler()
+        X_std = scaler.fit_transform(X)
 
-        st.sidebar.subheader("Parameter OPTICS")
+        st.sidebar.markdown("### ⚙️ Parameter OPTICS")
         min_samples = st.sidebar.slider("min_samples", 2, 20, 5)
-        xi = st.sidebar.slider("xi", 0.01, 0.3, 0.05)
-        min_cluster_size = st.sidebar.slider("min_cluster_size", 0.01, 0.5, 0.1)
+        xi = st.sidebar.slider("xi", 0.01, 0.3, 0.05, step=0.01)
+        min_cluster_size = st.sidebar.slider("min_cluster_size (proporsi)", 0.01, 0.5, 0.1, step=0.01)
 
-        X = StandardScaler().fit_transform(df_prop)
         optics = OPTICS(min_samples=min_samples, xi=xi, min_cluster_size=min_cluster_size)
-        optics.fit(X)
-
+        optics.fit(X_std)
         labels = optics.labels_
         reachability = optics.reachability_
         ordering = optics.ordering_
-        n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
-        silhouette = silhouette_score(X[labels != -1], labels[labels != -1]) if n_clusters > 1 else None
 
-        st.success(f"Jumlah Klaster: {n_clusters}")
-        if silhouette:
-            st.info(f"Silhouette Score: {silhouette:.3f}")
-
-        st.subheader("🔻 Reachability Plot")
-        fig, ax = plt.subplots(figsize=(15, 6))
-        space = np.arange(len(X))
-        reach_plot = np.where(np.isinf(reachability), np.nanmax(reachability) * 1.2, reachability)
-        for klass in set(labels):
-            mask = labels[ordering] == klass
-            color = 'k' if klass == -1 else plt.cm.tab10(klass % 10)
-            ax.plot(space[mask], reach_plot[ordering][mask], '.', markerfacecolor=color)
-        ax.set_ylabel('Reachability Distance')
+        st.subheader("📈 Reachability Plot")
+        fig, ax = plt.subplots(figsize=(12, 5))
+        space = np.arange(len(X_std))
+        colors = plt.cm.tab10(labels.astype(float) / (max(labels) + 1))
+        ax.bar(space, reachability[ordering], color=colors[ordering])
+        ax.set_ylabel('Reachability')
         ax.set_title('Reachability Plot')
         st.pyplot(fig)
 
-        # Simpan hasil
-        st.session_state.labels = labels
-        st.session_state.optics_model = optics
-    else:
-        st.warning("Silakan unggah dan pra-proses data terlebih dahulu.")
+        n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+        st.success(f"Jumlah Klaster: {n_clusters}")
 
-# ================================
-# Tab: Ringkasan
-# ================================
-elif menu == "Ringkasan":
-    st.title("📄 Ringkasan Hasil Clustering")
+        if n_clusters > 1:
+            sil_score = silhouette_score(X_std[labels != -1], labels[labels != -1])
+            st.markdown(f"Silhouette Score: **{sil_score:.4f}**")
 
-    if 'labels' in st.session_state and 'wilayah' in st.session_state:
-        df_summary = pd.DataFrame({
-            'Wilayah': st.session_state.wilayah,
-            'Cluster': st.session_state.labels
-        })
-        st.dataframe(df_summary)
+        df_result = df_prop.copy()
+        df_result['cluster'] = labels
+        st.session_state.df_result = df_result
+        st.dataframe(df_result)
     else:
-        st.warning("Belum ada hasil clustering untuk diringkas.")
+        st.warning("Silakan unggah dan proses data terlebih dahulu.")
+
+# ===================================
+# Halaman: Ringkasan
+# ===================================
+elif selected == "Ringkasan":
+    st.title("📋 Ringkasan Hasil Clustering")
+    if 'df_result' in st.session_state:
+        df_result = st.session_state.df_result
+        for label in sorted(df_result['cluster'].unique()):
+            cluster_df = df_result[df_result['cluster'] == label]
+            st.markdown(f"### 🟢 Klaster {label}")
+            st.write(cluster_df.describe().T)
+            st.bar_chart(cluster_df[selected_features])
+    else:
+        st.warning("Hasil clustering belum tersedia.")
