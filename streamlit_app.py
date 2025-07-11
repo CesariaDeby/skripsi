@@ -1,53 +1,54 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import seaborn as sns
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import OPTICS
 from sklearn.metrics import silhouette_score
-from scipy.signal import find_peaks
 from scipy.stats import skew
-import warnings
+from scipy.signal import find_peaks
+import matplotlib.patches as mpatches
 
-warnings.filterwarnings("ignore")
+st.set_page_config(layout="wide", page_title="Clustering Perceraian", page_icon="💔")
 
-# ==========================
-# Page Config & CSS Styling
-# ==========================
-st.set_page_config(layout="wide", page_title="💔 Clustering Perceraian")
+# ================================
+# Sidebar Navigasi & Styling
+# ================================
 st.markdown("""
     <style>
-    .main {background-color: #f9f9f9;}
-    .block-container {padding-top: 2rem;}
-    .stTabs [data-baseweb="tab"] {font-size: 16px; padding: 10px 20px;}
-    .css-18ni7ap {flex-direction: row;}
-    .stSlider > div {color: #2c3e50; font-weight: 500;}
+    section[data-testid="stSidebar"] {
+        background-color: #F0F5F9 !important;
+    }
+    .custom-title {
+        font-family: 'Arial Black';
+        font-size: 20px;
+        color: #0D3B66;
+        margin-bottom: 20px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# ==========================
-# Sidebar Navigation
-# ==========================
-st.sidebar.title("📋 Menu Navigasi")
-menu = st.sidebar.radio("Pilih Tahapan: ", [
-    "Unggah Data",
-    "Distribusi & Outlier",
-    "Clustering OPTICS",
-    "Ringkasan Hasil"
-])
+with st.sidebar:
+    st.image("https://cdn-icons-png.flaticon.com/512/3659/3659730.png", width=100)
+    st.markdown("<div class='custom-title'>Clustering Perceraian</div>", unsafe_allow_html=True)
+    menu = st.radio("Navigasi", ["Beranda", "Upload & Preprocessing", "Clustering OPTICS", "Ringkasan"])
 
-# ==========================
-# Load Dataset
-# ==========================
-if "df" not in st.session_state:
-    st.session_state.df = None
-    st.session_state.df_prop = None
-    st.session_state.selected_features = [
-        'perselisihan dan pertengkaran', 'ekonomi', 'KDRT', 'meninggalkan salah satu pihak', 'zina']
-
-if menu == "Unggah Data":
+# ================================
+# Tab: Beranda
+# ================================
+if menu == "Beranda":
     st.title("💔 Clustering Faktor Perceraian di Kabupaten/Kota")
+    st.markdown("""
+    Aplikasi ini bertujuan untuk mengelompokkan wilayah berdasarkan faktor penyebab perceraian menggunakan algoritma OPTICS.
+    Anda dapat mengunggah data, menangani outlier, memilih parameter, dan menampilkan visualisasi interaktif.
+    """)
+
+# ================================
+# Tab: Upload & Preprocessing
+# ================================
+elif menu == "Upload & Preprocessing":
+    st.title("📂 Upload & Pra-pemrosesan")
     uploaded_file = st.file_uploader("Unggah file Excel (.xlsx)", type="xlsx")
 
     if uploaded_file:
@@ -61,135 +62,104 @@ if menu == "Unggah Data":
             'Fakor Perceraian - Zina': 'zina',
         }, inplace=True)
 
+        selected_features = ['perselisihan dan pertengkaran', 'ekonomi', 'KDRT', 'meninggalkan salah satu pihak', 'zina']
         df = df[df['Jumlah Cerai'] > 0].copy()
         df.fillna(0, inplace=True)
 
-        # Hitung proporsi
-        for col in st.session_state.selected_features:
+        for col in selected_features:
             df[col] = df[col] / df['Jumlah Cerai']
 
-        st.session_state.df = df
-        st.session_state.df_prop = df[st.session_state.selected_features].copy()
+        df_prop = df[selected_features].copy()
+        st.session_state.df_prop = df_prop
+        st.session_state.wilayah = df['wilayah']
 
-        st.success("File berhasil dimuat dan diproses!")
-        st.dataframe(df[['wilayah'] + st.session_state.selected_features].set_index('wilayah'))
+        st.subheader("📊 Distribusi & Outlier")
+        tab1, tab2 = st.tabs(["Distribusi", "Boxplot"])
 
-elif menu == "Distribusi & Outlier":
-    st.title("📊 Visualisasi Distribusi & Deteksi Outlier")
-    if st.session_state.df is None:
-        st.warning("Silakan unggah file data terlebih dahulu.")
-    else:
-        tabs = st.tabs(["Distribusi", "Boxplot", "Post-Winsorization", "Heatmap Korelasi"])
-        df_prop = st.session_state.df_prop.copy()
-        features = st.session_state.selected_features
-
-        with tabs[0]:
-            st.markdown("##### Distribusi Data Tiap Faktor")
-            fig, axs = plt.subplots(2, 3, figsize=(18, 8))
-            for i, col in enumerate(features):
+        with tab1:
+            fig, axs = plt.subplots(2, 3, figsize=(16, 8))
+            for i, col in enumerate(selected_features):
                 ax = axs[i // 3][i % 3]
-                sns.histplot(df_prop[col], kde=True, bins=20, ax=ax)
+                sns.histplot(df_prop[col], kde=True, ax=ax)
                 ax.set_title(f"{col}\nSkewness: {skew(df_prop[col]):.2f}")
-            plt.tight_layout()
             st.pyplot(fig)
 
-        with tabs[1]:
-            st.markdown("##### Deteksi Outlier Sebelum Winsorization")
-            fig, axs = plt.subplots(2, 3, figsize=(18, 8))
-            for i, col in enumerate(features):
+        with tab2:
+            fig, axs = plt.subplots(2, 3, figsize=(16, 8))
+            for i, col in enumerate(selected_features):
                 ax = axs[i // 3][i % 3]
                 sns.boxplot(y=df_prop[col], ax=ax)
-                ax.set_title(f"{col}")
-            plt.tight_layout()
+                ax.set_title(f"Boxplot: {col}")
             st.pyplot(fig)
 
+        st.subheader("🔄 Winsorization")
         Q1 = df_prop.quantile(0.25)
         Q3 = df_prop.quantile(0.75)
         IQR = Q3 - Q1
-        for column in df_prop.columns:
-            lower = Q1[column] - 1.5 * IQR[column]
-            upper = Q3[column] + 1.5 * IQR[column]
-            df_prop[column] = np.where(df_prop[column] < lower, lower, df_prop[column])
-            df_prop[column] = np.where(df_prop[column] > upper, upper, df_prop[column])
+        for col in selected_features:
+            lower = Q1[col] - 1.5 * IQR[col]
+            upper = Q3[col] + 1.5 * IQR[col]
+            df_prop[col] = np.clip(df_prop[col], lower, upper)
         st.session_state.df_prop = df_prop
+        st.success("Outlier berhasil ditangani dengan Winsorization")
 
-        with tabs[2]:
-            st.markdown("##### Setelah Winsorization")
-            fig, axs = plt.subplots(2, 3, figsize=(18, 8))
-            for i, col in enumerate(features):
-                ax = axs[i // 3][i % 3]
-                sns.boxplot(y=df_prop[col], ax=ax)
-                ax.set_title(f"{col}")
-            plt.tight_layout()
-            st.pyplot(fig)
-
-        with tabs[3]:
-            st.markdown("##### Korelasi Pearson")
-            corr_matrix = df_prop.corr(method='pearson')
-            fig, ax = plt.subplots(figsize=(8, 6))
-            sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', center=0, fmt=".2f", ax=ax)
-            ax.set_title("Heatmap Korelasi antar Faktor")
-            st.pyplot(fig)
-
+# ================================
+# Tab: Clustering OPTICS
+# ================================
 elif menu == "Clustering OPTICS":
-    st.title("📈 Clustering dengan OPTICS")
-    if st.session_state.df is None:
-        st.warning("Silakan unggah file data terlebih dahulu.")
-    else:
-        X = st.session_state.df_prop.values
-        scaler = StandardScaler()
-        X_std = scaler.fit_transform(X)
+    st.title("💡 Clustering dengan OPTICS")
 
-        st.sidebar.markdown("### ⚙️ Parameter OPTICS")
+    if 'df_prop' in st.session_state:
+        df_prop = st.session_state.df_prop
+
+        st.sidebar.subheader("Parameter OPTICS")
         min_samples = st.sidebar.slider("min_samples", 2, 20, 5)
-        xi = st.sidebar.slider("xi", 0.01, 0.3, 0.05, step=0.01)
-        min_cluster_size = st.sidebar.slider("min_cluster_size (proporsi)", 0.01, 0.5, 0.1, step=0.01)
+        xi = st.sidebar.slider("xi", 0.01, 0.3, 0.05)
+        min_cluster_size = st.sidebar.slider("min_cluster_size", 0.01, 0.5, 0.1)
 
+        X = StandardScaler().fit_transform(df_prop)
         optics = OPTICS(min_samples=min_samples, xi=xi, min_cluster_size=min_cluster_size)
-        optics.fit(X_std)
+        optics.fit(X)
 
         labels = optics.labels_
-        ordering = optics.ordering_
         reachability = optics.reachability_
+        ordering = optics.ordering_
+        n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+        silhouette = silhouette_score(X[labels != -1], labels[labels != -1]) if n_clusters > 1 else None
 
-        # Reachability plot
-        reach_clean = np.where(np.isinf(reachability), np.nan, reachability)
-        finite_reach = reach_clean[~np.isnan(reach_clean)]
-        max_reach = np.nanmax(reach_clean) if len(finite_reach) > 0 else 1.0
-        reach_plot = np.where(np.isinf(reachability), max_reach * 1.2, reachability)
+        st.success(f"Jumlah Klaster: {n_clusters}")
+        if silhouette:
+            st.info(f"Silhouette Score: {silhouette:.3f}")
 
-        reach_ordered = reach_plot[ordering]
-        labels_ordered = labels[ordering]
-        space = np.arange(len(labels_ordered))
-
-        # Deteksi peaks & valleys
-        def detect_peaks_valleys(data, prom=0.15):
-            rng = np.max(data) - np.min(data)
-            p = rng * prom
-            peaks, _ = find_peaks(data, prominence=p, distance=5)
-            valleys, _ = find_peaks(-data, prominence=p, distance=5)
-            return peaks, valleys
-
-        peaks, valleys = detect_peaks_valleys(reach_ordered)
-
-        # Plot
-        fig, ax = plt.subplots(figsize=(14, 7))
-        ax.plot(space, reach_ordered, 'k-', alpha=0.3)
-        for label in np.unique(labels_ordered):
-            color = 'black' if label == -1 else plt.cm.tab10(label % 10)
-            mask = labels_ordered == label
-            ax.scatter(space[mask], reach_ordered[mask], c=[color], label=f"{'Noise' if label==-1 else f'Cluster {label}'}", s=40, alpha=0.8, edgecolors='black', linewidths=0.3)
-
-        ax.scatter(space[peaks], reach_ordered[peaks], marker='^', c='red', s=100, label='Peaks', edgecolors='darkred')
-        ax.scatter(space[valleys], reach_ordered[valleys], marker='v', c='blue', s=100, label='Valleys', edgecolors='darkblue')
-
-        ax.set_title("Reachability Plot with Peaks & Valleys")
-        ax.set_xlabel("Data Index (OPTICS Ordering)")
-        ax.set_ylabel("Reachability Distance")
-        ax.grid(True, linestyle='--', alpha=0.3)
-        ax.legend(loc='upper right')
+        st.subheader("🔻 Reachability Plot")
+        fig, ax = plt.subplots(figsize=(15, 6))
+        space = np.arange(len(X))
+        reach_plot = np.where(np.isinf(reachability), np.nanmax(reachability) * 1.2, reachability)
+        for klass in set(labels):
+            mask = labels[ordering] == klass
+            color = 'k' if klass == -1 else plt.cm.tab10(klass % 10)
+            ax.plot(space[mask], reach_plot[ordering][mask], '.', markerfacecolor=color)
+        ax.set_ylabel('Reachability Distance')
+        ax.set_title('Reachability Plot')
         st.pyplot(fig)
 
-elif menu == "Ringkasan Hasil":
-    st.title("📌 Ringkasan Hasil Clustering")
-    st.write("Silakan jalankan proses clustering pada menu sebelumnya untuk melihat ringkasan hasil.")
+        # Simpan hasil
+        st.session_state.labels = labels
+        st.session_state.optics_model = optics
+    else:
+        st.warning("Silakan unggah dan pra-proses data terlebih dahulu.")
+
+# ================================
+# Tab: Ringkasan
+# ================================
+elif menu == "Ringkasan":
+    st.title("📄 Ringkasan Hasil Clustering")
+
+    if 'labels' in st.session_state and 'wilayah' in st.session_state:
+        df_summary = pd.DataFrame({
+            'Wilayah': st.session_state.wilayah,
+            'Cluster': st.session_state.labels
+        })
+        st.dataframe(df_summary)
+    else:
+        st.warning("Belum ada hasil clustering untuk diringkas.")
