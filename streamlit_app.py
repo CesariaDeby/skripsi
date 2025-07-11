@@ -158,6 +158,7 @@ if uploaded_file:
 
 else:
     st.info("Silakan unggah file Excel terlebih dahulu.")
+    
 # Assumsi: Data telah tersedia di variabel berikut:
 # df: DataFrame dengan kolom 'wilayah' dan fitur-fitur
 # X_std: Hasil standardisasi dari data numerik
@@ -165,11 +166,6 @@ else:
 # selected_features: daftar nama fitur yang digunakan
 # n_clusters, n_noise, actual_silhouette, min_samples, xi, min_cluster_size, ordering, reachability, core_distances, cluster_counts tersedia
 
-# ===============================
-# STREAMLIT APP STARTS HERE
-# ===============================
-st.set_page_config(layout="wide")
-st.title("Analisis Klaster Perceraian di Jawa Timur dengan OPTICS")
 
 # PHASE 6: SUMMARY & NEXT STEPS
 st.header("\U0001F4CC Ringkasan Hasil & Langkah Selanjutnya")
