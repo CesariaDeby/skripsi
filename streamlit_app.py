@@ -155,7 +155,7 @@ if uploaded_file:
             xi=user_xi,
             min_cluster_size=user_min_cluster_size
         )
-        optics = OPTICS(min_samples=param['min_samples'], xi=param['xi'], min_cluster_size=param['min_cluster_size'])
+        optics = OPTICS(min_samples=user_min_samples, xi=user_xi, min_cluster_size=user_min_cluster_size)
         optics.fit(X_std)
 
         labels_op = optics.labels_
