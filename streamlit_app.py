@@ -9,7 +9,6 @@ from sklearn.cluster import OPTICS
 from sklearn.neighbors import NearestNeighbors
 from sklearn.metrics import silhouette_score, silhouette_samples, davies_bouldin_score
 from scipy.signal import find_peaks
-import geopandas as gpd
 import matplotlib.patches as mpatches
 import matplotlib.patheffects as path_effects
 from shapely.geometry import Point
