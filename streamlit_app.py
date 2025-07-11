@@ -134,7 +134,7 @@ if uploaded_file:
         # ===============================
         # PHASE 2: STANDARISASI DATA
         # ===============================
-        X = df[selected_features].values
+        X = df_prop.values
         scaler = StandardScaler()
         X_std = scaler.fit_transform(X)
 
