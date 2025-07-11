@@ -138,34 +138,7 @@ if uploaded_file:
         scaler = StandardScaler()
         X_std = scaler.fit_transform(X)
 
-        # ===============================
-        # PHASE 3: GRID SEARCH PARAMETER OPTICS
-        # ===============================
-        st.subheader("Pemilihan Parameter Terbaik (Grid Search)")
-        min_samples_list = [2, 3, 5, 7]
-        xi_list = [0.03, 0.05, 0.07]
-        min_cluster_size_list = [0.05, 0.1, 0.2]
-
-        best_results = []
-        for ms in min_samples_list:
-            for xi in xi_list:
-                for mcs in min_cluster_size_list:
-                    optics = OPTICS(min_samples=ms, xi=xi, min_cluster_size=mcs)
-                    labels = optics.fit_predict(X_std)
-                    valid = labels != -1
-                    if valid.sum() < 2 or len(set(labels)) <= 1:
-                        continue
-                    score = silhouette_score(X_std[valid], labels[valid])
-                    best_results.append({
-                        'min_samples': ms, 'xi': xi, 'min_cluster_size': mcs,
-                        'score': score,
-                        'clusters': len(set(labels)) - (1 if -1 in labels else 0),
-                        'noise': np.sum(labels == -1)
-                    })
-
-        top_results = sorted(best_results, key=lambda x: x['score'], reverse=True)[:5]
-        st.write(pd.DataFrame(top_results))
-
+    
         # ===============================
         # PHASE 4: CLUSTERING DENGAN PARAMETER MANUAL (USER INPUT)
         # ===============================
