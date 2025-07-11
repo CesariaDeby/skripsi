@@ -168,26 +168,110 @@ if uploaded_file:
         actual_silhouette = silhouette_score(X_std[valid_mask], labels_op[valid_mask]) if valid_mask.sum() >= 2 else None
 
         # ===============================
-        # PHASE 5: REACHABILITY PLOT
+        # PHASE 5: REACHABILITY PLOT (ADVANCED VERSION)
         # ===============================
-        st.subheader("Reachability Plot")
-        space = np.arange(len(X_std))
+        st.subheader("📉 Reachability Plot (Peaks & Valleys Analysis)")
+        
+        # 5.1 Clean and prepare reachability
         reachability_clean = np.where(np.isinf(reachability), np.nan, reachability)
-        max_reach = np.nanmax(reachability_clean)
-        reach_plot = np.where(np.isinf(reachability), max_reach * 1.2, reachability)
-        reach_ordered = reach_plot[ordering]
+        finite_reach = reachability_clean[~np.isnan(reachability_clean)]
+        
+        if len(finite_reach) > 0:
+            max_reach = np.nanmax(reachability_clean)
+            reachability_plot = np.where(np.isinf(reachability), max_reach * 1.2, reachability)
+        else:
+            max_reach = 1.0
+            reachability_plot = np.where(np.isinf(reachability), 1.2, reachability)
+        
+        reachability_ordered = reachability_plot[ordering]
         labels_ordered = labels_op[ordering]
-
-        fig, ax = plt.subplots(figsize=(14, 6))
-        for klass in np.unique(labels_ordered):
-            mask = labels_ordered == klass
-            color = 'k' if klass == -1 else plt.cm.tab10(klass % 10)
-            label = "Noise" if klass == -1 else f"Cluster {klass}"
-            ax.plot(space[mask], reach_ordered[mask], marker='.', linestyle='', ms=5, label=label)
-        ax.set_ylabel("Reachability Distance")
-        ax.set_title("Reachability Plot (OPTICS)")
-        ax.legend()
+        space = np.arange(len(labels_ordered))
+        
+        # 5.2 Mapping warna
+        unique_labels_ordered = np.unique(labels_ordered)
+        cluster_labels = sorted(label for label in unique_labels_ordered if label != -1)
+        colors = plt.cm.tab10(np.linspace(0, 1, 10))
+        label_to_color = {-1: 'black'}
+        for i, label in enumerate(cluster_labels):
+            label_to_color[label] = colors[i % 10]
+        
+        # 5.3 Deteksi peaks dan valleys
+        def detect_peaks_valleys(data, prominence_factor=0.1):
+            from scipy.signal import find_peaks
+            data_range = np.max(data) - np.min(data)
+            prominence = data_range * prominence_factor
+            peaks, peak_props = find_peaks(data, prominence=prominence, distance=5)
+            valleys, valley_props = find_peaks(-data, prominence=prominence, distance=5)
+            return peaks, valleys, peak_props, valley_props
+        
+        peaks, valleys, peak_props, valley_props = detect_peaks_valleys(reachability_ordered, prominence_factor=0.15)
+        
+        # 5.4 Visualisasi
+        fig, ax = plt.subplots(figsize=(15, 8))
+        ax.plot(space, reachability_ordered, 'k-', linewidth=1, alpha=0.3, label='Reachability Profile')
+        
+        # Plot masing-masing cluster
+        for label in sorted(label_to_color.keys()):
+            mask = labels_ordered == label
+            color = label_to_color[label]
+            label_text = 'Noise' if label == -1 else f'Cluster {label}'
+            ax.scatter(space[mask], reachability_ordered[mask],
+                       c=[color], s=40, alpha=0.9,
+                       label=label_text, edgecolors='black', linewidths=0.3)
+        
+        # Plot peaks
+        if len(peaks) > 0:
+            ax.scatter(space[peaks], reachability_ordered[peaks], marker='^', s=100, c='red', alpha=0.8,
+                       label=f'Peaks ({len(peaks)}) - Cluster Boundaries',
+                       edgecolors='darkred', linewidth=2, zorder=5)
+            for i, idx in enumerate(peaks):
+                ax.annotate(f'P{i+1}', xy=(space[idx], reachability_ordered[idx]),
+                            xytext=(5, 10), textcoords='offset points',
+                            fontsize=9, fontweight='bold', color='red',
+                            bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.8))
+        
+        # Plot valleys
+        if len(valleys) > 0:
+            ax.scatter(space[valleys], reachability_ordered[valleys], marker='v', s=100, c='blue', alpha=0.8,
+                       label=f'Valleys ({len(valleys)}) - Cluster Cores',
+                       edgecolors='darkblue', linewidth=2, zorder=5)
+            for i, idx in enumerate(valleys):
+                ax.annotate(f'V{i+1}', xy=(space[idx], reachability_ordered[idx]),
+                            xytext=(5, -15), textcoords='offset points',
+                            fontsize=9, fontweight='bold', color='blue',
+                            bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.8))
+        
+        # 5.5 Tambahan visualisasi: xi threshold & boundaries
+        if len(finite_reach) > 0:
+            xi_threshold = np.percentile(finite_reach, 85)
+            ax.axhline(y=xi_threshold, color='orange', linestyle='--', alpha=0.7,
+                       linewidth=2, label=f'Xi Threshold (≈{xi_threshold:.3f})')
+            ax.axhspan(0, xi_threshold, alpha=0.1, color='green', label='Cluster Extraction Zone')
+        
+        # Tambah garis batas antar cluster
+        cluster_boundaries = []
+        for i in range(len(unique_labels_ordered) - 1):
+            current_label = unique_labels_ordered[i]
+            next_label = unique_labels_ordered[i + 1]
+            for j in range(len(labels_ordered) - 1):
+                if labels_ordered[j] == current_label and labels_ordered[j + 1] == next_label:
+                    cluster_boundaries.append(j + 0.5)
+                    break
+        
+        for boundary in cluster_boundaries:
+            ax.axvline(x=boundary, color='gray', linestyle=':', alpha=0.5, linewidth=1)
+        
+        # Finalisasi plot
+        ax.set_title("OPTICS Reachability Plot with Peaks & Valleys Analysis", fontsize=16, fontweight='bold', pad=20)
+        ax.set_xlabel("Data Point Index (OPTICS Ordering)", fontsize=12)
+        ax.set_ylabel("Reachability Distance", fontsize=12)
+        ax.legend(title="Cluster", fontsize=9, title_fontsize=10, loc='upper right', bbox_to_anchor=(1.25, 1))
+        ax.grid(True, linestyle='--', alpha=0.3)
+        plt.tight_layout()
+        plt.subplots_adjust(bottom=0.15)
+        
         st.pyplot(fig)
+
 
         # ===============================
         # PHASE 6: RINGKASAN HASIL
