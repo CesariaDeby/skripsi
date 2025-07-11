@@ -127,10 +127,6 @@ if uploaded_file:
     high_corr = corr_matrix.where(~np.eye(corr_matrix.shape[0],dtype=bool)).stack()
     high_corr = high_corr[abs(high_corr) > 0.6].sort_values(ascending=False)
     st.dataframe(high_corr.round(2))
-    
-    df = pd.read_excel(uploaded_file)
-    df['wilayah'] = df['wilayah'].str.upper().str.strip()
-    selected_features = st.sidebar.multiselect("Pilih Fitur", df.columns.drop('wilayah'))
 
     if selected_features:
         st.success("Fitur terpilih: " + ", ".join(selected_features))
