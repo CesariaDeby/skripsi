@@ -121,6 +121,31 @@ if uploaded_file:
     ordering = optics.ordering_
     reachability = optics.reachability_
 
+# ================================
+# DEFINISI VARIABEL TAMBAHAN UNTUK PHASE 6
+# ================================
+
+# Hitung jumlah klaster dan noise
+n_clusters = len(set(labels_op)) - (1 if -1 in labels_op else 0)
+n_noise = np.sum(labels_op == -1)
+
+# Hitung silhouette score jika valid
+actual_silhouette = silhouette_score(X_std[labels_op != -1], labels_op[labels_op != -1]) \
+    if n_clusters > 1 else None
+
+# Ambil parameter terbaik dari hasil grid search
+min_samples = param['min_samples']
+xi = param['xi']
+min_cluster_size = param['min_cluster_size']
+
+# Hitung core_distances jika belum ada
+core_distances = optics.core_distances_
+
+# Hitung jumlah data per klaster
+from collections import Counter
+cluster_counts = Counter(labels_op)
+
+
     # ================================
     # 7. Reachability Plot
     # ================================
