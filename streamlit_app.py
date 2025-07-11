@@ -1,29 +1,29 @@
+# STREAMLIT VERSION OF PHASE 1-5
 import streamlit as st
 import pandas as pd
 import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
-from scipy.stats import skew
+import seab as sns
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import OPTICS
+from sklearn.neighbors import NearestNeighbors
+from sklearn.metrics import silhouette_score, silhouette_samples, davies_bouldin_score
+from scipy.signal import find_peaks
 import warnings
 
 warnings.filterwarnings("ignore")
 
 st.set_page_config(layout="wide", page_title="Clustering Perceraian", page_icon="💔")
-
-# ================================
-# 1. Judul dan Upload Data
-# ================================
-st.title("💔 Aplikasi Pengelompokan Kabupaten/Kota Jawa Timur Berdasarkan Faktor Penyebab Perceraian")
-st.markdown("### Upload Dataset")
+st.title("💔 Clustering Faktor Perceraian di Kabupaten/Kota")
 
 uploaded_file = st.file_uploader("Unggah file Excel (.xlsx)", type="xlsx")
 
 if uploaded_file:
+    # ================================
+    # 1. Load dan Pra-pemrosesan Data
+    # ================================
     df = pd.read_excel(uploaded_file)
 
-    # ================================
-    # 2. Rename Kolom
-    # ================================
     df.rename(columns={
         'Kabupaten/Kota': 'wilayah',
         'Fakor Perceraian - Perselisihan dan Pertengkaran Terus Menerus': 'perselisihan dan pertengkaran',
@@ -33,95 +33,125 @@ if uploaded_file:
         'Fakor Perceraian - Zina': 'zina',
     }, inplace=True)
 
-    # ================================
-    # 3. Preprocessing
-    # ================================
-    selected_features = [
-        'perselisihan dan pertengkaran',
-        'ekonomi',
-        'KDRT',
-        'meninggalkan salah satu pihak',
-        'zina'
-    ]
+    selected_features = ['perselisihan dan pertengkaran', 'ekonomi', 'KDRT', 'meninggalkan salah satu pihak', 'zina']
 
     df = df[df['Jumlah Cerai'] > 0].copy()
     df.fillna(0, inplace=True)
 
-    # Buat kolom proporsi
     for col in selected_features:
         df[col] = df[col] / df['Jumlah Cerai']
 
     df_prop = df[selected_features].copy()
-    st.subheader("🔢 Data Proporsi Faktor Perceraian")
-    st.dataframe(df[['wilayah'] + selected_features].set_index('wilayah'))
 
     # ================================
-    # 4. Visualisasi Distribusi & Outlier
+    # 2. Visualisasi Distribusi Awal
     # ================================
-    st.markdown("### 📊 Distribusi dan Outlier Tiap Faktor")
-
-    tabs = st.tabs(["Distribusi", "Boxplot", "Post-Winsorization", "Heatmap Korelasi"])
-
-    with tabs[0]:
-        fig, axs = plt.subplots(2, 3, figsize=(16, 8))
-        for i, col in enumerate(selected_features):
-            ax = axs[i // 3][i % 3]
-            sns.histplot(df_prop[col], kde=True, bins=20, ax=ax)
-            ax.set_title(f"{col}\nSkewness: {skew(df_prop[col]):.2f}")
-        plt.tight_layout()
-        st.pyplot(fig)
-
-    with tabs[1]:
-        fig, axs = plt.subplots(2, 3, figsize=(16, 8))
-        for i, col in enumerate(selected_features):
-            ax = axs[i // 3][i % 3]
-            sns.boxplot(y=df_prop[col], ax=ax)
-            ax.set_title(f"Outlier Check: {col}")
-        plt.tight_layout()
-        st.pyplot(fig)
+    st.subheader("Distribusi Proporsi Tiap Faktor")
+    fig, ax = plt.subplots(1, len(selected_features), figsize=(20, 4))
+    for i, col in enumerate(selected_features):
+        sns.histplot(df_prop[col], kde=True, bins=20, ax=ax[i])
+        ax[i].set_title(col)
+    st.pyplot(fig)
 
     # ================================
-    # 5. Winsorization
+    # 3. Winsorization dan Boxplot
     # ================================
     Q1 = df_prop.quantile(0.25)
     Q3 = df_prop.quantile(0.75)
     IQR = Q3 - Q1
-
-    outlier_counts = ((df_prop < (Q1 - 1.5 * IQR)) | (df_prop > (Q3 + 1.5 * IQR))).sum()
-    st.markdown("#### ⚠️ Jumlah Outlier per Fitur")
-    st.write(outlier_counts)
-
-    for column in df_prop.columns:
-        lower = Q1[column] - 1.5 * IQR[column]
-        upper = Q3[column] + 1.5 * IQR[column]
-        df_prop[column] = np.where(df_prop[column] < lower, lower, df_prop[column])
-        df_prop[column] = np.where(df_prop[column] > upper, upper, df_prop[column])
-
-    with tabs[2]:
-        fig, axs = plt.subplots(2, 3, figsize=(16, 8))
-        for i, col in enumerate(selected_features):
-            ax = axs[i // 3][i % 3]
-            sns.boxplot(y=df_prop[col], ax=ax)
-            ax.set_title(f"Post-Winsorization: {col}")
-        plt.tight_layout()
-        st.pyplot(fig)
+    for col in selected_features:
+        lower = Q1[col] - 1.5 * IQR[col]
+        upper = Q3[col] + 1.5 * IQR[col]
+        df_prop[col] = np.clip(df_prop[col], lower, upper)
 
     # ================================
-    # 6. Korelasi Pearson
+    # 4. Korelasi Pearson
     # ================================
-    corr_matrix = df_prop.corr(method='pearson')
+    st.subheader("Heatmap Korelasi dan Korelasi Pearson")
+    corr = df_prop.corr()
+    fig, ax = plt.subplots(figsize=(8, 6))
+    sns.heatmap(corr, annot=True, cmap='coolwarm', center=0, fmt=".2f", ax=ax)
+    st.pyplot(fig)
+    st.write("Matriks Korelasi Pearson antar Faktor:")
+    st.dataframe(corr.round(2))
 
-    with tabs[3]:
-        fig, ax = plt.subplots(figsize=(8, 6))
-        sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', center=0, fmt=".2f", ax=ax)
-        ax.set_title("Heatmap Korelasi antar Faktor")
-        st.pyplot(fig)
+    # ================================
+    # 5. Standarisasi Data
+    # ================================
+    X = df_prop[selected_features].values
+    scaler = StandardScaler()
+    X_std = scaler.fit_transform(X)
 
-    st.markdown("#### 📈 Korelasi Pearson > 0.6")
-    high_corr = corr_matrix.where(~np.eye(corr_matrix.shape[0],dtype=bool)).stack()
-    high_corr = high_corr[abs(high_corr) > 0.6].sort_values(ascending=False)
-    st.dataframe(high_corr.round(2))
+    # ================================
+    # 6. Grid Search Parameter OPTICS
+    # ================================
+    st.subheader("Pemilihan Parameter Terbaik (Grid Search)")
+    min_samples_list = [2, 3, 5, 7]
+    xi_list = [0.03, 0.05, 0.07]
+    min_cluster_size_list = [0.05, 0.1, 0.2]
+
+    best_results = []
+    for ms in min_samples_list:
+        for xi in xi_list:
+            for mcs in min_cluster_size_list:
+                optics = OPTICS(min_samples=ms, xi=xi, min_cluster_size=mcs)
+                labels = optics.fit_predict(X_std)
+                valid = labels != -1
+                if valid.sum() < 2 or len(set(labels)) <= 1:
+                    continue
+                score = silhouette_score(X_std[valid], labels[valid])
+                best_results.append({
+                    'min_samples': ms, 'xi': xi, 'min_cluster_size': mcs,
+                    'score': score,
+                    'clusters': len(set(labels)) - (1 if -1 in labels else 0),
+                    'noise': np.sum(labels == -1)
+                })
+
+    top_results = sorted(best_results, key=lambda x: x['score'], reverse=True)[:5]
+    st.write(pd.DataFrame(top_results))
+
+    # Gunakan parameter terbaik pertama
+    param = top_results[0]
+    optics = OPTICS(min_samples=param['min_samples'], xi=param['xi'], min_cluster_size=param['min_cluster_size'])
+    optics.fit(X_std)
+    labels_op = optics.labels_
+    ordering = optics.ordering_
+    reachability = optics.reachability_
+
+    # ================================
+    # 7. Reachability Plot
+    # ================================
+    st.subheader("Reachability Plot")
+    space = np.arange(len(X_std))
+    reachability_clean = np.where(np.isinf(reachability), np.nan, reachability)
+    max_reach = np.nanmax(reachability_clean)
+    reach_plot = np.where(np.isinf(reachability), max_reach * 1.2, reachability)
+    reach_ordered = reach_plot[ordering]
+    labels_ordered = labels_op[ordering]
+
+    fig, ax = plt.subplots(figsize=(14, 6))
+    for klass in np.unique(labels_ordered):
+        mask = labels_ordered == klass
+        color = 'k' if klass == -1 else plt.cm.tab10(klass % 10)
+        label = "Noise" if klass == -1 else f"Cluster {klass}"
+        ax.plot(space[mask], reach_ordered[mask], marker='.', linestyle='', ms=5, label=label)
+    ax.set_ylabel("Reachability Distance")
+    ax.set_title("Reachability Plot (OPTICS)")
+    ax.legend()
+    st.pyplot(fig)
+
+    # ================================
+    # 8. Evaluasi Clustering
+    # ================================
+    st.subheader("Evaluasi Clustering")
+    valid_mask = labels_op != -1
+    if valid_mask.sum() >= 2:
+        sil = silhouette_score(X_std[valid_mask], labels_op[valid_mask])
+        dbi = davies_bouldin_score(X_std[valid_mask], labels_op[valid_mask])
+        st.write(f"Silhouette Score: {sil:.3f}")
+        st.write(f"Davies-Bouldin Index: {dbi:.3f}")
+    else:
+        st.warning("Tidak cukup titik valid untuk evaluasi clustering.")
 
 else:
-    st.info("Silakan unggah file Excel (.xlsx) yang berisi data perceraian.")
-
+    st.info("Silakan unggah file Excel terlebih dahulu.")
