@@ -183,32 +183,30 @@ if menu == "Beranda":
     Dengan menggunakan algoritma **OPTICS Clustering**, aplikasi ini membantu mengungkap pola perceraian yang dominan di setiap wilayah sebagai bahan pertimbangan dalam perumusan kebijakan sosial yang lebih tepat sasaran.
 
     ### 🧠 Apa itu OPTICS?
-    OPTICS (Ordering Points To Identify the Clustering Structure) adalah algoritma klasterisasi berbasis kepadatan (density-based clustering) yang dirancang untuk menemukan struktur klaster dalam data yang kompleks, terutama ketika klaster memiliki bentuk dan kepadatan yang tidak seragam.
-    Berbeda dengan algoritma seperti K-Means yang membutuhkan jumlah klaster di awal, OPTICS tidak memerlukan jumlah klaster ditentukan sebelumnya.
-    OPTICS menyusun titik-titik data berdasarkan jarak keterjangkauannya (reachability distance), sehingga menghasilkan visualisasi Reachability Plot yang dapat digunakan untuk mengidentifikasi struktur klaster secara visual dan fleksibel.
-    
+    **OPTICS** (Ordering Points To Identify the Clustering Structure) adalah metode klasterisasi yang dikembangkan sebagai **penyempurnaan dari algoritma DBSCAN**. Keduanya termasuk dalam keluarga **density-based clustering**, yaitu metode yang mengelompokkan data berdasarkan kepadatan titik-titik di sekitarnya.
+    Jika DBSCAN hanya mampu mendeteksi klaster dengan satu tingkat kepadatan dan memerlukan parameter epsilon (jarak maksimum antar titik), maka OPTICS lebih fleksibel. OPTICS **tidak membutuhkan nilai epsilon yang pasti di awal** dan mampu menemukan **klaster dengan berbagai bentuk dan kepadatan berbeda secara otomatis**.
+    Keunggulan utama OPTICS adalah kemampuannya membuat **Reachability Plot**, yaitu grafik yang membantu kita **melihat struktur klaster secara visual**, termasuk titik-titik yang dianggap sebagai noise.
+
+
+   
     ### ✨ Mengapa OPTICS?
-    - Mampu mendeteksi klaster dengan bentuk dan kepadatan yang bervariasi
-    - Tidak memerlukan jumlah klaster yang ditentukan sebelumnya
+    - Dapat mendeteksi klaster dengan bentuk dan kepadatan yang beragam
+    - Tidak perlu menentukan jumlah klaster dari awal
     - Menghasilkan plot visualisasi **Reachability Plot** untuk interpretasi hasil yang lebih mendalam
+    - Lebih fleksibel dibanding DBSCAN dalam menangani data kompleks
 
     ### 💔 Tentang Perceraian
     Perceraian di Indonesia bisa disebabkan oleh berbagai faktor. Dalam aplikasi ini, Anda dapat memilih faktor-faktor yang dianggap penting seperti:
     - **Perselisihan dan Pertengkaran**
-        
-        Ketidakharmonisan yang terus-menerus antara pasangan, sering kali berupa konflik yang tidak terselesaikan.
+        : Ketidakharmonisan yang terus-menerus antara pasangan, sering kali berupa konflik yang tidak terselesaikan.
     - **Masalah Ekonomi**
-        
-        Ketidakmampuan memenuhi kebutuhan hidup yang menimbulkan ketegangan dalam rumah tangga.
+        : Ketidakmampuan memenuhi kebutuhan hidup yang menimbulkan ketegangan dalam rumah tangga.
     - **Kekerasan Dalam Rumah Tangga (KDRT)**
-        
-        Tindakan kekerasan fisik, psikis, atau seksual yang dilakukan salah satu pihak terhadap pasangannya.
+        : Tindakan kekerasan fisik, psikis, atau seksual yang dilakukan salah satu pihak terhadap pasangannya.
     - **Meninggalkan salah satu pihak**
-        
-        Salah satu pasangan meninggalkan rumah tangga tanpa izin atau alasan yang sah dalam jangka waktu lama.
+        : Salah satu pasangan meninggalkan rumah tangga tanpa izin atau alasan yang sah dalam jangka waktu lama.
     - **Zina**
-        
-        Pelanggaran kesetiaan dalam pernikahan melalui hubungan di luar ikatan resmi, seperti perselingkuhan.
+        : Pelanggaran kesetiaan dalam pernikahan melalui hubungan di luar ikatan resmi, seperti perselingkuhan.
 
     ### 🚀 Alur Penggunaan
     1. Upload data
@@ -353,9 +351,11 @@ elif menu == "Pemodelan OPTICS":
 
         st.markdown("### ✏️ Parameter OPTICS")
         st.markdown("""
-        - **min_samples**: jumlah minimum tetangga untuk menjadi titik inti
-        - **xi**: toleransi perubahan kepadatan (semakin kecil, semakin sensitif)
-        - **min_cluster_size**: proporsi minimum ukuran klaster dari total data
+        - **`min_samples`**: Jumlah minimum tetangga (titik terdekat) yang diperlukan agar suatu titik dianggap sebagai **titik inti** (*core point*). Semakin besar nilainya, semakin ketat syarat pembentukan klaster.
+        
+        - **`xi`**: Mengatur tingkat toleransi terhadap perubahan kepadatan saat menentukan batas antar klaster. Nilai **lebih kecil** membuat algoritma **lebih sensitif** dalam memisahkan klaster.
+        
+        - **`min_cluster_size`**: Ukuran **minimum klaster** yang diizinkan, dinyatakan dalam **persentase dari total data** (misalnya 0.1 = 10%). Berguna untuk mencegah terbentuknya klaster yang terlalu kecil atau tidak bermakna.
         """)
 
         min_samples = st.slider("min_samples", 2, 20, 5)
@@ -378,18 +378,32 @@ elif menu == "Pemodelan OPTICS":
             st.session_state.reachability = optics.reachability_
             st.session_state.ordering = optics.ordering_
 
-            # Core distances
-            core_distances = optics.core_distances_
             st.markdown("### 📏 Core Distance")
+            st.markdown("""
+            **Core Distance** menunjukkan jarak minimum yang diperlukan agar suatu titik dianggap sebagai **titik inti (core point)**. 
+            Nilai ini dihitung berdasarkan jarak ke tetangga ke-`min_samples` terdekat. 
+            Jika suatu titik tidak memiliki cukup tetangga, maka nilainya adalah 0 atau tidak terdefinisi.
+            
+            Statistik berikut memberikan gambaran umum mengenai distribusi nilai core distance dari seluruh data.
+            """)
+            
+            core_distances = optics.core_distances_
             st.write(f"Total data points: {len(core_distances)}")
             st.write(f"Core points found: {(core_distances > 0).sum()}")
             st.write(f"Non-core points: {(core_distances == 0).sum()}")
             st.write(pd.Series(core_distances).describe()[['mean','std','min','max']].rename("Core Distance Stats"))
-
-            # Reachability distances
+            
+            st.markdown("### 🔗 Reachability Distance")
+            st.markdown("""
+            **Reachability Distance** menunjukkan seberapa mudah suatu titik dijangkau dari titik inti lainnya. 
+            Nilai ini mempertimbangkan jarak antar titik dan kepadatan di sekitar titik asal. 
+            Semakin kecil nilainya, semakin dekat atau padat hubungan antar titik tersebut.
+            
+            Reachability digunakan dalam **Reachability Plot**, yang merupakan visualisasi penting untuk mendeteksi struktur klaster pada data.
+            """)
+            
             reachability = optics.reachability_
             reachability_clean = reachability[np.isfinite(reachability)]
-            st.markdown("### 🔗 Reachability Distance")
             st.write(f"Finite reachability distances: {len(reachability_clean)}")
             st.write(f"Infinite reachability distances: {(~np.isfinite(reachability)).sum()}")
             st.write(pd.Series(reachability_clean).describe()[['mean','std','min','max']].rename("Reachability Stats"))
@@ -491,6 +505,13 @@ elif menu == "Pemodelan OPTICS":
             st.write(f"xi: {xi}")
             st.write(f"min_cluster_size: {min_cluster_size}")
 
+            st.success("✅ Pemodelan dengan OPTICS berhasil dilakukan!")
+            st.markdown("""
+            Untuk mengetahui seberapa baik hasil pengelompokan yang terbentuk, 
+            silakan buka menu **Evaluasi Model** pada sidebar.  
+            Di sana Anda dapat melihat penilaian kualitas klaster menggunakan metrik seperti **Silhouette Score** dan **Davies-Bouldin Index**.
+            """)
+
 # =============================
 # EVALUASI MODEL
 # =============================
@@ -509,19 +530,28 @@ elif menu == "Evaluasi Model":
             sil = silhouette_score(X[mask], labels[mask])
             dbi = davies_bouldin_score(X[mask], labels[mask])
 
+            # Silhouette Score
             st.markdown("### 📈 Silhouette Score")
+            st.markdown("""
+            **Silhouette Score** mengukur seberapa baik setiap data berada dalam klasternya.  
             st.write(f"Nilai Silhouette: **{sil:.3f}**")
             st.dataframe(pd.DataFrame({
                 'Rentang': ['> 0.7', '0.5 - 0.7', '0.25 - 0.5', '< 0.25'],
                 'Interpretasi': ['Sangat baik', 'Baik', 'Cukup', 'Buruk']
             }))
 
+            # Davies-Bouldin Index
             st.markdown("### 📉 Davies-Bouldin Index")
+            st.markdown("""
+            **Davies-Bouldin Index (DBI)** mengukur seberapa baik klaster terpisah satu sama lain.  
+            Nilai DBI **lebih rendah lebih baik**, karena menunjukkan antar-klaster yang lebih terpisah dan kompak.
             st.write(f"Nilai DBI: **{dbi:.3f}**")
             st.dataframe(pd.DataFrame({
                 'Rentang': ['0 - 1', '1 - 2', '> 2'],
                 'Interpretasi': ['Sangat baik', 'Cukup', 'Buruk']
             }))
+
+
 
 # =============================
 # RINGKASAN HASIL
