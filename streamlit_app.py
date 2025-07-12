@@ -14,6 +14,61 @@ import base64
 st.set_page_config(page_title="Clustering Perceraian Jawa Timur", page_icon="💔", layout="wide")
 
 # =============================
+# CUSTOM BACKGROUND & STYLING
+# =============================
+st.markdown("""
+    <style>
+        /* Background color */
+        .stApp {
+            background-color: #f9f9f9;
+            background-image: linear-gradient(to bottom right, #fdfcfb, #e2d1c3);
+        }
+
+        /* Sidebar background and text color */
+        [data-testid="stSidebar"] {
+            background-color: #fefae0;
+            color: #000000;
+        }
+
+        /* Header & title styling */
+        h1, h2, h3 {
+            color: #2b2d42 !important;
+        }
+
+        /* Markdown content color */
+        .markdown-text-container {
+            color: #1b1b1b;
+        }
+
+        /* Buttons */
+        .stButton>button {
+            background-color: #d62828;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5em 1em;
+            font-weight: bold;
+        }
+
+        .stButton>button:hover {
+            background-color: #a61e1e;
+            color: white;
+        }
+
+        /* Tabs */
+        div[data-baseweb="tab"] {
+            background-color: #f1faee;
+            border-radius: 6px;
+        }
+
+        /* Dataframe background */
+        .stDataFrame {
+            background-color: white;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# =============================
 # HEADER DAN LOGO
 # =============================
 st.sidebar.image("logo_jatim.png", width=120)
