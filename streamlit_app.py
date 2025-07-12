@@ -181,6 +181,11 @@ if menu == "Beranda":
     st.markdown("""
     Aplikasi ini dirancang untuk **mengelompokkan kabupaten/kota di Provinsi Jawa Timur** berdasarkan kemiripan distribusi faktor penyebab perceraian. 
     Dengan menggunakan algoritma **OPTICS Clustering**, aplikasi ini membantu mengungkap pola perceraian yang dominan di setiap wilayah sebagai bahan pertimbangan dalam perumusan kebijakan sosial yang lebih tepat sasaran.
+
+    ### 🧠 Apa itu OPTICS?
+    OPTICS (Ordering Points To Identify the Clustering Structure) adalah algoritma klasterisasi berbasis kepadatan (density-based clustering) yang dirancang untuk menemukan struktur klaster dalam data yang kompleks, terutama ketika klaster memiliki bentuk dan kepadatan yang tidak seragam.
+    Berbeda dengan algoritma seperti K-Means yang membutuhkan jumlah klaster di awal, OPTICS tidak memerlukan jumlah klaster ditentukan sebelumnya.
+    OPTICS menyusun titik-titik data berdasarkan jarak keterjangkauannya (reachability distance), sehingga menghasilkan visualisasi Reachability Plot yang dapat digunakan untuk mengidentifikasi struktur klaster secara visual dan fleksibel.
     
     ### ✨ Mengapa OPTICS?
     - Mampu mendeteksi klaster dengan bentuk dan kepadatan yang bervariasi
@@ -190,14 +195,19 @@ if menu == "Beranda":
     ### 💔 Tentang Perceraian
     Perceraian di Indonesia bisa disebabkan oleh berbagai faktor. Dalam aplikasi ini, Anda dapat memilih faktor-faktor yang dianggap penting seperti:
     - **Perselisihan dan Pertengkaran**
+        
         Ketidakharmonisan yang terus-menerus antara pasangan, sering kali berupa konflik yang tidak terselesaikan.
     - **Masalah Ekonomi**
+        
         Ketidakmampuan memenuhi kebutuhan hidup yang menimbulkan ketegangan dalam rumah tangga.
     - **Kekerasan Dalam Rumah Tangga (KDRT)**
+        
         Tindakan kekerasan fisik, psikis, atau seksual yang dilakukan salah satu pihak terhadap pasangannya.
     - **Meninggalkan salah satu pihak**
+        
         Salah satu pasangan meninggalkan rumah tangga tanpa izin atau alasan yang sah dalam jangka waktu lama.
     - **Zina**
+        
         Pelanggaran kesetiaan dalam pernikahan melalui hubungan di luar ikatan resmi, seperti perselingkuhan.
 
     ### 🚀 Alur Penggunaan
