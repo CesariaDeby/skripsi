@@ -1,5 +1,3 @@
-# Streamlit GUI untuk Clustering Perceraian Jawa Timur dengan OPTICS
-# ==============================================================
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -28,15 +26,16 @@ BERDASARKAN FAKTOR PENYEBAB PERCERAIAN DI JAWA TIMUR
 """, unsafe_allow_html=True)
 
 # =============================
-# SIDEBAR MENU
+# MENU
 # =============================
-menu = st.sidebar.radio("📌 Navigasi", [
-    "Beranda", 
-    "Upload Data & Pilih Faktor", 
-    "Preprocessing", 
-    "Pemodelan OPTICS", 
-    "Evaluasi Model", 
-    "Ringkasan Hasil"])
+menu = st.sidebar.selectbox("🔍 Pilih Menu", [
+    "Beranda",
+    "Upload Data & Pilih Faktor",
+    "Preprocessing",
+    "Pemodelan OPTICS",
+    "Evaluasi Model",
+    "Ringkasan Hasil"
+])
 
 # Variabel global sementara (simpan di session_state jika perlu)
 if 'df' not in st.session_state:
