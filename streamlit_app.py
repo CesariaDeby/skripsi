@@ -196,7 +196,7 @@ if menu == "Beranda":
     - Lebih fleksibel dibanding DBSCAN dalam menangani data kompleks
 
     ### 💔 Tentang Perceraian
-    Perceraian di Indonesia bisa disebabkan oleh berbagai faktor. Dalam aplikasi ini, Anda dapat memilih faktor-faktor yang dianggap penting seperti:
+    Perceraian dapat terjadi karena berbagai penyebab. Dalam aplikasi ini, Anda dapat mengeksplorasi beberapa faktor utama yang sering menjadi penyebab perceraian, seperti:
     - **Perselisihan dan Pertengkaran**
         : Ketidakharmonisan yang terus-menerus antara pasangan, sering kali berupa konflik yang tidak terselesaikan.
     - **Masalah Ekonomi**
@@ -508,7 +508,7 @@ elif menu == "Pemodelan OPTICS":
             st.success("✅ Pemodelan dengan OPTICS berhasil dilakukan!")
             st.markdown("""
             Untuk mengetahui seberapa baik hasil pengelompokan yang terbentuk, 
-            silakan buka menu **Evaluasi Model** pada sidebar.  
+            silahkan buka menu **Evaluasi Model**!!  
             Di sana Anda dapat melihat penilaian kualitas klaster menggunakan metrik seperti **Silhouette Score** dan **Davies-Bouldin Index**.
             """)
 
