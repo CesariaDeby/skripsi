@@ -148,11 +148,19 @@ elif menu == "Preprocessing":
             st.info("Missing value diisi dengan 0 untuk menjaga integritas data.")
 
         with tab4:
+            # Simpan hanya kolom yang diperlukan
+            df = df[['wilayah', 'Jumlah Cerai'] + selected].copy()
+            
+            # Hitung proporsi setiap faktor terhadap jumlah cerai
             for col in selected:
                 df[col] = df[col] / df['Jumlah Cerai']
-            st.session_state.df_prop = df[selected]
-            st.info("Data diproporsikan untuk menjaga skala dan menghindari bias karena jumlah perceraian berbeda-beda di tiap daerah.")
-            st.dataframe(st.session_state.df_prop.head())
+            
+            # Simpan df ke session_state
+            st.session_state.df = df.copy()
+            
+            # Info dan tampilkan
+            st.info("✅ Data telah diproporsikan berdasarkan jumlah perceraian.")
+            st.dataframe(df.set_index('wilayah').head())
 
         with tab5:
             Q1 = df[selected].quantile(0.25)
@@ -386,8 +394,8 @@ elif menu == "Ringkasan Hasil":
         st.error(f"❌ Jumlah data ({len(df)}) dan label hasil clustering ({len(labels)}) tidak cocok. "
                  f"Pastikan preprocessing dan pemodelan dijalankan ulang.")
     else:
-        df = df.copy()
-        df['Cluster'] = labels
+        df_result = df.copy()
+        df_result['Cluster'] = st.session_state.labels_op
 
         st.markdown("### 📍 Parameter yang Digunakan")
         st.write(f"min_samples: {st.session_state.get('min_samples', '-')}")
