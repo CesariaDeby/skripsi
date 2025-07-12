@@ -386,9 +386,10 @@ elif menu == "Evaluasi Model":
 # =============================
 elif menu == "Ringkasan Hasil":
     st.header("📌 Ringkasan Akhir")
-    
-    df = st.session_state.df
-    labels = st.session_state.labels_op
+
+    df = st.session_state.get('df', None)
+    labels = st.session_state.get('labels_op', None)
+    X_std = st.session_state.get('X_std', None)
 
     if df is None or labels is None:
         st.warning("Belum ada hasil clustering.")
@@ -397,25 +398,45 @@ elif menu == "Ringkasan Hasil":
                  f"Pastikan preprocessing dan pemodelan dijalankan ulang.")
     else:
         df_result = df.copy()
-        df_result['Cluster'] = st.session_state.labels_op
+        df_result['Cluster'] = labels
 
+        # Tampilkan parameter
         st.markdown("### 📍 Parameter yang Digunakan")
-        st.write(f"min_samples: {st.session_state.get('min_samples', '-')}")
-        st.write(f"xi: {st.session_state.get('xi', '-')}")
-        st.write(f"min_cluster_size: {st.session_state.get('min_cluster_size', '-')}")
+        st.write(f"**min_samples**: {st.session_state.get('min_samples', '-')}")
+        st.write(f"**xi**: {st.session_state.get('xi', '-')}")
+        st.write(f"**min_cluster_size**: {st.session_state.get('min_cluster_size', '-')}")
 
+        # Distribusi klaster
         st.markdown("### 📊 Distribusi Klaster")
-        st.dataframe(df.groupby('Cluster')['wilayah'].apply(list).rename("Wilayah dalam Klaster"))
+        if 'wilayah' in df_result.columns:
+            distribusi = df_result.groupby('Cluster')['wilayah'].apply(list).rename("Wilayah dalam Klaster")
+            st.dataframe(distribusi)
+        else:
+            st.error("Kolom 'wilayah' tidak ditemukan pada data. Pastikan data awal memiliki kolom tersebut.")
 
-        mask = labels != -1
-        if mask.sum() >= 2:
-            sil = silhouette_score(st.session_state.X_std[mask], labels[mask])
-            dbi = davies_bouldin_score(st.session_state.X_std[mask], labels[mask])
-            st.write(f"Silhouette Score: {sil:.3f}")
-            st.write(f"Davies-Bouldin Index: {dbi:.3f}")
+        # Evaluasi ulang jika memungkinkan
+        if X_std is not None:
+            mask = labels != -1
+            if mask.sum() >= 2:
+                sil = silhouette_score(X_std[mask], labels[mask])
+                dbi = davies_bouldin_score(X_std[mask], labels[mask])
+                st.markdown("### 📈 Evaluasi Hasil")
+                st.write(f"**Silhouette Score**: {sil:.3f}")
+                st.write(f"**Davies-Bouldin Index**: {dbi:.3f}")
+            else:
+                st.warning("Terlalu banyak noise untuk evaluasi (data non-noise < 2).")
 
-        csv = df[['wilayah', 'Cluster']].to_csv(index=False)
-        b64 = base64.b64encode(csv.encode()).decode()
-        href = f'<a href="data:file/csv;base64,{b64}" download="hasil_klaster.csv">📥 Unduh Ringkasan Hasil (.csv)</a>'
-        st.markdown(href, unsafe_allow_html=True)
-
+        # Unduh Excel
+        if 'wilayah' in df_result.columns:
+            df_download = df_result[['wilayah', 'Cluster']].copy()
+            buffer = io.BytesIO()
+            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+                df_download.to_excel(writer, index=False, sheet_name='Hasil Klaster')
+                writer.save()
+            buffer.seek(0)
+            st.download_button(
+                label="📥 Unduh Ringkasan Hasil (.xlsx)",
+                data=buffer,
+                file_name="hasil_klaster.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
