@@ -231,10 +231,12 @@ elif menu == "Pemodelan OPTICS":
             st.session_state.xi = xi
             st.session_state.min_cluster_size = min_cluster_size
 
-
             reachability = optics.reachability_
             ordering = optics.ordering_
             labels_op = optics.labels_
+
+            st.session_state.reachability = optics.reachability_
+            st.session_state.ordering = optics.ordering_
 
             # Core distances
             core_distances = optics.core_distances_
@@ -397,34 +399,82 @@ elif menu == "Ringkasan Hasil":
         st.error(f"❌ Jumlah data ({len(df)}) dan label hasil clustering ({len(labels)}) tidak cocok. "
                  f"Pastikan preprocessing dan pemodelan dijalankan ulang.")
     else:
+        # Siapkan hasil akhir
         df_result = df.copy()
         df_result['Cluster'] = labels
 
-        # Tampilkan parameter
-        st.markdown("### 📍 Parameter yang Digunakan")
-        st.write(f"**min_samples**: {st.session_state.get('min_samples', '-')}")
-        st.write(f"**xi**: {st.session_state.get('xi', '-')}")
-        st.write(f"**min_cluster_size**: {st.session_state.get('min_cluster_size', '-')}")
+        st.markdown("### ⚙️ Parameter yang Digunakan")
+        st.write(f"min_samples: {st.session_state.get('min_samples', '-')}")
+        st.write(f"xi: {st.session_state.get('xi', '-')}")
+        st.write(f"min_cluster_size: {st.session_state.get('min_cluster_size', '-')}")
 
-        # Distribusi klaster
-        st.markdown("### 📊 Distribusi Klaster")
+        # =====================
+        # Reachability Plot
+        # =====================
+        st.markdown("### 📉 Reachability Plot")
+
+        reachability = OPTICS().fit(X_std).reachability_
+        reachability_plot = np.where(np.isinf(reachability), np.nanmax(reachability) * 1.2, reachability)
+        ordering = OPTICS().fit(X_std).ordering_
+        labels_ordered = labels[ordering]
+        reachability_ordered = reachability_plot[ordering]
+        space = np.arange(len(X_std))
+
+        fig1, ax1 = plt.subplots(figsize=(12, 6))
+        unique_labels = np.unique(labels_ordered)
+        colors = plt.cm.tab10(np.linspace(0, 1, len(unique_labels)))
+
+        for klass, color in zip(unique_labels, colors):
+            if klass == -1:
+                color = 'black'
+            Xk = space[labels_ordered == klass]
+            Rk = reachability_ordered[labels_ordered == klass]
+            ax1.plot(Xk, Rk, marker='.', linestyle='', ms=5, label=f"Cluster {klass}" if klass != -1 else "Noise", color=color)
+
+        ax1.set_ylabel('Reachability Distance')
+        ax1.set_title('Reachability Plot')
+        ax1.legend()
+        st.pyplot(fig1)
+
+        # =====================
+        # Distribusi Klaster - Tabel
+        # =====================
+        st.markdown("### 📍 Tabel Wilayah per Klaster")
         if 'wilayah' in df_result.columns:
             distribusi = df_result.groupby('Cluster')['wilayah'].apply(list).rename("Wilayah dalam Klaster")
             st.dataframe(distribusi)
         else:
-            st.error("Kolom 'wilayah' tidak ditemukan pada data. Pastikan data awal memiliki kolom tersebut.")
+            st.warning("Kolom 'wilayah' tidak ditemukan dalam data.")
 
-        # Evaluasi ulang jika memungkinkan
-        if X_std is not None:
-            mask = labels != -1
-            if mask.sum() >= 2:
-                sil = silhouette_score(X_std[mask], labels[mask])
-                dbi = davies_bouldin_score(X_std[mask], labels[mask])
-                st.markdown("### 📈 Evaluasi Hasil")
-                st.write(f"**Silhouette Score**: {sil:.3f}")
-                st.write(f"**Davies-Bouldin Index**: {dbi:.3f}")
-            else:
-                st.warning("Terlalu banyak noise untuk evaluasi (data non-noise < 2).")
+        # =====================
+        # Distribusi Klaster - Visualisasi
+        # =====================
+        st.markdown("### 📊 Visualisasi Distribusi Klaster")
+        cluster_counts = df_result['Cluster'].value_counts().sort_index()
+        cluster_labels = [f"Cluster {int(k)}" if k != -1 else "Noise" for k in cluster_counts.index]
+        cluster_colors = ['#1f77b4' if k != -1 else '#d62728' for k in cluster_counts.index]
+
+        fig2, ax2 = plt.subplots(figsize=(10, 5))
+        sns.barplot(x=cluster_labels, y=cluster_counts.values, palette=cluster_colors, ax=ax2)
+        ax2.set_title("Jumlah Wilayah per Klaster")
+        ax2.set_ylabel("Jumlah Wilayah")
+        ax2.set_xlabel("Klaster")
+        for i, count in enumerate(cluster_counts.values):
+            ax2.text(i, count + 0.5, str(count), ha='center', va='bottom', fontsize=10)
+        st.pyplot(fig2)
+
+        # =====================
+        # Evaluasi
+        # =====================
+        st.markdown("### 🧪 Evaluasi Klaster")
+        mask = labels != -1
+        if mask.sum() >= 2:
+            sil = silhouette_score(X_std[mask], labels[mask])
+            dbi = davies_bouldin_score(X_std[mask], labels[mask])
+            st.write(f"Silhouette Score: **{sil:.3f}**")
+            st.write(f"Davies-Bouldin Index: **{dbi:.3f}**")
+        else:
+            st.warning("Terlalu banyak noise, evaluasi tidak bisa dilakukan.")
 
         # Unduh Excel
         if 'wilayah' in df_result.columns:
