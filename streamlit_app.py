@@ -179,20 +179,26 @@ if 'labels_op' not in st.session_state:
 if menu == "Beranda":
     st.header("📖 Tentang Aplikasi")
     st.markdown("""
-    Aplikasi ini bertujuan untuk **mengelompokkan kabupaten/kota di Provinsi Jawa Timur** berdasarkan proporsi faktor-faktor penyebab perceraian menggunakan algoritma **OPTICS Clustering**.
-
+    Aplikasi ini dirancang untuk **mengelompokkan kabupaten/kota di Provinsi Jawa Timur** berdasarkan kemiripan distribusi faktor penyebab perceraian. 
+    Dengan menggunakan algoritma **OPTICS Clustering**, aplikasi ini membantu mengungkap pola perceraian yang dominan di setiap wilayah sebagai bahan pertimbangan dalam perumusan kebijakan sosial yang lebih tepat sasaran.
+    
     ### ✨ Mengapa OPTICS?
-    - Dapat mendeteksi **klaster dengan bentuk arbitrer**
-    - Tidak perlu menentukan jumlah klaster di awal
-    - Menghasilkan plot **Reachability** untuk interpretasi mendalam
+    - Mampu mendeteksi klaster dengan bentuk dan kepadatan yang bervariasi
+    - Tidak memerlukan jumlah klaster yang ditentukan sebelumnya
+    - Menghasilkan plot visualisasi **Reachability Plot** untuk interpretasi hasil yang lebih mendalam
 
     ### 💔 Tentang Perceraian
     Perceraian di Indonesia bisa disebabkan oleh berbagai faktor. Dalam aplikasi ini, Anda dapat memilih faktor-faktor yang dianggap penting seperti:
-    - Perselisihan dan Pertengkaran
-    - Masalah Ekonomi
-    - Kekerasan Dalam Rumah Tangga (KDRT)
-    - Meninggalkan salah satu pihak
-    - Zina
+    - **Perselisihan dan Pertengkaran**
+        Ketidakharmonisan yang terus-menerus antara pasangan, sering kali berupa konflik yang tidak terselesaikan.
+    - **Masalah Ekonomi**
+        Ketidakmampuan memenuhi kebutuhan hidup yang menimbulkan ketegangan dalam rumah tangga.
+    - **Kekerasan Dalam Rumah Tangga (KDRT)**
+        Tindakan kekerasan fisik, psikis, atau seksual yang dilakukan salah satu pihak terhadap pasangannya.
+    - **Meninggalkan salah satu pihak**
+        Salah satu pasangan meninggalkan rumah tangga tanpa izin atau alasan yang sah dalam jangka waktu lama.
+    - **Zina**
+        Pelanggaran kesetiaan dalam pernikahan melalui hubungan di luar ikatan resmi, seperti perselingkuhan.
 
     ### 🚀 Alur Penggunaan
     1. Upload data
