@@ -15,53 +15,75 @@ st.set_page_config(page_title="Clustering Perceraian Jawa Timur", page_icon="ðŸ’
 
 st.markdown("""
 <style>
-    /* GLOBAL TABLE STYLING (untuk semua tabel) */
+    /* ============================== */
+    /*     GLOBAL TABEL STYLING      */
+    /* ============================== */
+
     table {
         background-color: white;
         border-collapse: collapse;
         width: 100%;
         font-size: 16px;
-        border: 1px solid #ccc;
-        color: #212529;
+        border: 1px solid #adb5bd;
+        color: black;
     }
 
     th {
-        background-color: #343a40;
-        color: white !important;
-        padding: 10px;
+        background-color: #d62828;
+        color: white;
+        padding: 12px;
         text-align: left;
         font-size: 16px;
         font-weight: bold;
-        border: 1px solid #ccc;
+        border: 1px solid #adb5bd;
     }
 
     td {
         background-color: #ffffff;
         padding: 10px;
-        border: 1px solid #ddd;
-        color: #212529 !important;
+        border: 1px solid #dee2e6;
+        color: black !important;
+        font-size: 15px;
     }
 
     tr:hover td {
-        background-color: #f1f1f1;
+        background-color: #f1f3f5 !important;
     }
 
-    /* Dataframe container styling */
+    /* ============================== */
+    /*     st.dataframe (modern)     */
+    /* ============================== */
+
     .stDataFrame {
-        background-color: white;
+        background-color: #ffffff;
         border-radius: 10px;
         padding: 10px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.05);
-        color: #212529;
+        box-shadow: 0 0 10px rgba(0,0,0,0.04);
+        color: black !important;
+        font-size: 15px;
     }
 
-    /* Sidebar */
+    /* ============================== */
+    /*   Perjelas teks markdown      */
+    /* ============================== */
+
+    .markdown-text-container {
+        color: black !important;
+    }
+
+    /* ============================== */
+    /*      Sidebar tetap gelap      */
+    /* ============================== */
+
     [data-testid="stSidebar"] {
         background-color: #343a40;
         color: white;
     }
 
-    /* Label atau badge wilayah dalam tabel */
+    /* ============================== */
+    /*     Label/BADGE Wilayah       */
+    /* ============================== */
+
     .css-1wivap2, .css-qrbaxs, .css-1cpxqw2 {
         background-color: #dee2e6 !important;
         color: #212529 !important;
