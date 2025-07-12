@@ -16,7 +16,7 @@ st.set_page_config(page_title="Clustering Perceraian Jawa Timur", page_icon="�
 # =============================
 # HEADER DAN LOGO
 # =============================
-st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Coat_of_arms_of_East_Java.svg/800px-Coat_of_arms_of_East_Java.svg.png", width=100)
+st.sidebar.image("logo_jatim.png", width=120)
 st.markdown("""
 <h1 style='text-align: center; color: #d62828;'>
 APLIKASI PENGELOMPOKAN KABUPATEN/KOTA <br>
@@ -224,6 +224,30 @@ elif menu == "Pemodelan OPTICS":
             ordering = optics.ordering_
             labels_op = optics.labels_
 
+            # Core distances
+            core_distances = optics.core_distances_
+            st.markdown("### 📏 Core Distance")
+            st.write(f"Total data points: {len(core_distances)}")
+            st.write(f"Core points found: {(core_distances > 0).sum()}")
+            st.write(f"Non-core points: {(core_distances == 0).sum()}")
+            st.write(pd.Series(core_distances).describe()[['mean','std','min','max']].rename("Core Distance Stats"))
+
+            # Reachability distances
+            reachability = optics.reachability_
+            reachability_clean = reachability[np.isfinite(reachability)]
+            st.markdown("### 🔗 Reachability Distance")
+            st.write(f"Finite reachability distances: {len(reachability_clean)}")
+            st.write(f"Infinite reachability distances: {(~np.isfinite(reachability)).sum()}")
+            st.write(pd.Series(reachability_clean).describe()[['mean','std','min','max']].rename("Reachability Stats"))
+
+            # Distribusi klaster
+            labels = optics.labels_
+            n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+            st.markdown("### 📊 Distribusi Klaster")
+            dist_df = pd.Series(labels).value_counts().sort_index()
+            for k, v in dist_df.items():
+                name = f"Cluster {k}" if k != -1 else "Noise"
+                st.write(f"{name}: {v} points ({(v / len(labels) * 100):.1f}%)")
             # Reachability plot update with detailed visualization
             reachability_clean = np.where(np.isinf(reachability), np.nan, reachability)
             finite_reach = reachability_clean[~np.isnan(reachability_clean)]
