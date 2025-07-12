@@ -377,34 +377,35 @@ elif menu == "Evaluasi Model":
 elif menu == "Ringkasan Hasil":
     st.header("📌 Ringkasan Akhir")
     
-    if st.session_state.labels_op is None or st.session_state.df is None:
+    df = st.session_state.df
+    labels = st.session_state.labels_op
+
+    if df is None or labels is None:
         st.warning("Belum ada hasil clustering.")
+    elif len(df) != len(labels):
+        st.error(f"❌ Jumlah data ({len(df)}) dan label hasil clustering ({len(labels)}) tidak cocok. "
+                 f"Pastikan preprocessing dan pemodelan dijalankan ulang.")
     else:
-        df = st.session_state.df.copy()
+        df = df.copy()
+        df['Cluster'] = labels
 
-        # Pastikan panjang data cocok
-        if len(df) != len(st.session_state.labels_op):
-            st.error("❌ Jumlah data dan label tidak sesuai. Pastikan preprocessing dan pemodelan telah dijalankan dengan benar.")
-        else:
-            df['Cluster'] = st.session_state.labels_op
+        st.markdown("### 📍 Parameter yang Digunakan")
+        st.write(f"min_samples: {st.session_state.get('min_samples', '-')}")
+        st.write(f"xi: {st.session_state.get('xi', '-')}")
+        st.write(f"min_cluster_size: {st.session_state.get('min_cluster_size', '-')}")
 
-            st.markdown("### 📍 Parameter yang Digunakan")
-            st.write(f"min_samples: {st.session_state.get('min_samples', '-')}")
-            st.write(f"xi: {st.session_state.get('xi', '-')}")
-            st.write(f"min_cluster_size: {st.session_state.get('min_cluster_size', '-')}")
+        st.markdown("### 📊 Distribusi Klaster")
+        st.dataframe(df.groupby('Cluster')['wilayah'].apply(list).rename("Wilayah dalam Klaster"))
 
-            st.markdown("### 📊 Distribusi Klaster")
-            st.dataframe(df.groupby('Cluster')['wilayah'].apply(list).rename("Wilayah dalam Klaster"))
+        mask = labels != -1
+        if mask.sum() >= 2:
+            sil = silhouette_score(st.session_state.X_std[mask], labels[mask])
+            dbi = davies_bouldin_score(st.session_state.X_std[mask], labels[mask])
+            st.write(f"Silhouette Score: {sil:.3f}")
+            st.write(f"Davies-Bouldin Index: {dbi:.3f}")
 
-            if 'X_std' in st.session_state and 'labels_op' in st.session_state:
-                mask = st.session_state.labels_op != -1
-                if mask.sum() >= 2:
-                    sil = silhouette_score(st.session_state.X_std[mask], st.session_state.labels_op[mask])
-                    dbi = davies_bouldin_score(st.session_state.X_std[mask], st.session_state.labels_op[mask])
-                    st.write(f"Silhouette Score: {sil:.3f}")
-                    st.write(f"Davies-Bouldin Index: {dbi:.3f}")
+        csv = df[['wilayah', 'Cluster']].to_csv(index=False)
+        b64 = base64.b64encode(csv.encode()).decode()
+        href = f'<a href="data:file/csv;base64,{b64}" download="hasil_klaster.csv">📥 Unduh Ringkasan Hasil (.csv)</a>'
+        st.markdown(href, unsafe_allow_html=True)
 
-            csv = df[['wilayah', 'Cluster']].to_csv(index=False)
-            b64 = base64.b64encode(csv.encode()).decode()
-            href = f'<a href="data:file/csv;base64,{b64}" download="hasil_klaster.csv">📥 Unduh Ringkasan Hasil (.csv)</a>'
-            st.markdown(href, unsafe_allow_html=True)
