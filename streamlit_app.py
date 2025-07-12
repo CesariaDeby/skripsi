@@ -109,96 +109,98 @@ elif menu == "Upload Data & Pilih Faktor":
 # =============================
 # PREPROCESSING
 # =============================
+# =============================
+# PREPROCESSING
+# =============================
 elif menu == "Preprocessing":
     if st.session_state.df is None:
         st.warning("Silakan unggah data terlebih dahulu.")
     else:
         df = st.session_state.df.copy()
         selected = st.session_state.selected_features
-        df = df[df['Jumlah Cerai'] > 0].copy()
-        df = df[selected + ['Jumlah Cerai']]
 
-        tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-            "Statistik & Korelasi", "Cek Missing Value", "Tangani Missing Value",
-            "Proporsi", "Cek Outlier", "Tangani Outlier", "Standarisasi"])
+        # Pastikan kolom wajib tersedia
+        expected_cols = ['wilayah', 'Jumlah Cerai'] + selected
+        missing_cols = [col for col in expected_cols if col not in df.columns]
 
-        with tab1:
-            st.markdown("### 📊 Statistik Deskriptif")
-            st.dataframe(df.describe())
-            st.markdown("### 🔥 Distribusi Faktor")
-            fig, axs = plt.subplots(1, len(selected), figsize=(16, 4))
-            for i, col in enumerate(selected):
-                sns.histplot(df[col], kde=True, ax=axs[i])
-                axs[i].set_title(col)
-            st.pyplot(fig)
+        if missing_cols:
+            st.error(f"❌ Kolom berikut tidak ditemukan dalam data: {missing_cols}")
+        else:
+            df = df[expected_cols].copy()
+            df = df[df['Jumlah Cerai'] > 0]
 
-            st.markdown("### 🔗 Korelasi Pearson")
-            corr = df[selected].corr(method='pearson')
-            fig, ax = plt.subplots(figsize=(8, 5))
-            sns.heatmap(corr, annot=True, cmap='coolwarm', center=0, ax=ax)
-            st.pyplot(fig)
+            tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+                "Statistik & Korelasi", "Cek Missing Value", "Tangani Missing Value",
+                "Proporsi", "Cek Outlier", "Tangani Outlier", "Standarisasi"])
 
-        with tab2:
-            st.markdown("### 🔍 Jumlah Missing Value Tiap Faktor")
-            st.dataframe(df[selected].isna().sum().rename("Jumlah Missing"))
+            with tab1:
+                st.markdown("### 📊 Statistik Deskriptif")
+                st.dataframe(df.describe())
+                st.markdown("### 🔥 Distribusi Faktor")
+                fig, axs = plt.subplots(1, len(selected), figsize=(16, 4))
+                for i, col in enumerate(selected):
+                    sns.histplot(df[col], kde=True, ax=axs[i])
+                    axs[i].set_title(col)
+                st.pyplot(fig)
 
-        with tab3:
-            df.fillna(0, inplace=True)
-            st.dataframe(df[selected].isna().sum().rename("Setelah Ditangani"))
-            st.info("Missing value diisi dengan 0 untuk menjaga integritas data.")
+                st.markdown("### 🔗 Korelasi Pearson")
+                corr = df[selected].corr(method='pearson')
+                fig, ax = plt.subplots(figsize=(8, 5))
+                sns.heatmap(corr, annot=True, cmap='coolwarm', center=0, ax=ax)
+                st.pyplot(fig)
 
-        with tab4:
-            # Simpan hanya kolom yang diperlukan
-            df = df[['wilayah', 'Jumlah Cerai'] + selected].copy()
-            
-            # Hitung proporsi setiap faktor terhadap jumlah cerai
-            for col in selected:
-                df[col] = df[col] / df['Jumlah Cerai']
-            
-            # Simpan df ke session_state
-            st.session_state.df = df.copy()
-            
-            # Info dan tampilkan
-            st.info("✅ Data telah diproporsikan berdasarkan jumlah perceraian.")
-            st.dataframe(df.set_index('wilayah').head())
+            with tab2:
+                st.markdown("### 🔍 Jumlah Missing Value Tiap Faktor")
+                st.dataframe(df[selected].isna().sum().rename("Jumlah Missing"))
 
-        with tab5:
-            Q1 = df[selected].quantile(0.25)
-            Q3 = df[selected].quantile(0.75)
-            IQR = Q3 - Q1
-            outliers = ((df[selected] < (Q1 - 1.5 * IQR)) | (df[selected] > (Q3 + 1.5 * IQR))).sum()
-            st.dataframe(outliers.rename("Jumlah Outlier"))
-            fig, axs = plt.subplots(1, len(selected), figsize=(16, 4))
-            for i, col in enumerate(selected):
-                sns.boxplot(y=df[col], ax=axs[i])
-                axs[i].set_title(col)
-            st.pyplot(fig)
+            with tab3:
+                df.fillna(0, inplace=True)
+                st.dataframe(df[selected].isna().sum().rename("Setelah Ditangani"))
+                st.info("Missing value diisi dengan 0 untuk menjaga integritas data.")
 
-        with tab6:
-            for col in selected:
-                lower = Q1[col] - 1.5 * IQR[col]
-                upper = Q3[col] + 1.5 * IQR[col]
-                df[col] = np.where(df[col] < lower, lower, df[col])
-                df[col] = np.where(df[col] > upper, upper, df[col])
-            st.session_state.df_prop = df[selected]
-            st.success("Outlier ditangani dengan metode Winsorization.")
-            fig, axs = plt.subplots(1, len(selected), figsize=(16, 4))
-            for i, col in enumerate(selected):
-                sns.boxplot(y=df[col], ax=axs[i])
-                axs[i].set_title(col)
-            st.pyplot(fig)
+            with tab4:
+                for col in selected:
+                    df[col] = df[col] / df['Jumlah Cerai']
+                st.session_state.df = df.copy()
+                st.info("✅ Data telah diproporsikan berdasarkan jumlah perceraian.")
+                st.dataframe(df.set_index('wilayah').head())
 
-        with tab7:
-            X_std = StandardScaler().fit_transform(df[selected])
-            st.session_state.X_std = X_std
-            before = pd.DataFrame(df[selected]).describe().loc[['mean', 'std']]
-            after = pd.DataFrame(X_std, columns=selected).describe().loc[['mean', 'std']]
-            st.subheader("📊 Sebelum Standarisasi")
-            st.dataframe(before)
-            st.subheader("📈 Setelah Standarisasi")
-            st.dataframe(after)
-            st.info("Standardisasi penting agar semua fitur memiliki skala yang sama.")
-            st.session_state.df = df 
+            with tab5:
+                Q1 = df[selected].quantile(0.25)
+                Q3 = df[selected].quantile(0.75)
+                IQR = Q3 - Q1
+                outliers = ((df[selected] < (Q1 - 1.5 * IQR)) | (df[selected] > (Q3 + 1.5 * IQR))).sum()
+                st.dataframe(outliers.rename("Jumlah Outlier"))
+                fig, axs = plt.subplots(1, len(selected), figsize=(16, 4))
+                for i, col in enumerate(selected):
+                    sns.boxplot(y=df[col], ax=axs[i])
+                    axs[i].set_title(col)
+                st.pyplot(fig)
+
+            with tab6:
+                for col in selected:
+                    lower = Q1[col] - 1.5 * IQR[col]
+                    upper = Q3[col] + 1.5 * IQR[col]
+                    df[col] = np.where(df[col] < lower, lower, df[col])
+                    df[col] = np.where(df[col] > upper, upper, df[col])
+                st.session_state.df_prop = df[selected]
+                st.success("Outlier ditangani dengan metode Winsorization.")
+                fig, axs = plt.subplots(1, len(selected), figsize=(16, 4))
+                for i, col in enumerate(selected):
+                    sns.boxplot(y=df[col], ax=axs[i])
+                    axs[i].set_title(col)
+                st.pyplot(fig)
+
+            with tab7:
+                X_std = StandardScaler().fit_transform(df[selected])
+                st.session_state.X_std = X_std
+                before = pd.DataFrame(df[selected]).describe().loc[['mean', 'std']]
+                after = pd.DataFrame(X_std, columns=selected).describe().loc[['mean', 'std']]
+                st.subheader("📊 Sebelum Standarisasi")
+                st.dataframe(before)
+                st.subheader("📈 Setelah Standarisasi")
+                st.dataframe(after)
+                st.info("Standardisasi penting agar semua fitur memiliki skala yang sama.")
 
 # =============================
 # PEMODELAN OPTICS
