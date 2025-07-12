@@ -430,7 +430,7 @@ elif menu == "Ringkasan Hasil":
         if 'wilayah' in df_result.columns:
             df_download = df_result[['wilayah', 'Cluster']].copy()
             buffer = io.BytesIO()
-            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
                 df_download.to_excel(writer, index=False, sheet_name='Hasil Klaster')
                 writer.save()
             buffer.seek(0)
