@@ -13,119 +13,56 @@ import base64
 
 st.set_page_config(page_title="Clustering Perceraian Jawa Timur", page_icon="💔", layout="wide")
 
-# ================================
-# TAMBAHAN CSS UNTUK STYLING TABEL
-# ================================
 st.markdown("""
 <style>
-/* HEADER TABEL */
-thead tr th {
-    background-color: #6c757d !important; /* abu gelap selaras sidebar */
-    color: white !important;
-    font-size: 15px;
-    padding: 10px;
-    border: 1px solid #dee2e6;
-    text-align: left;
-}
-
-/* ISI TABEL */
-tbody tr td {
-    background-color: #f8f9fa !important;  /* abu muda */
-    color: #212529 !important;             /* teks hitam */
-    font-size: 14px;
-    padding: 10px;
-    border: 1px solid #dee2e6;
-}
-
-/* HOVER ROW */
-tbody tr:hover td {
-    background-color: #e9ecef !important;
-}
-
-/* Gaya umum tabel */
-table {
-    border-collapse: collapse;
-    border-spacing: 0;
-    width: 100%;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-st.markdown("""
-<style>
-    /* ============================== */
-    /*     GLOBAL TABEL STYLING      */
-    /* ============================== */
-
+    /* GLOBAL TABLE STYLING (untuk semua tabel) */
     table {
         background-color: white;
         border-collapse: collapse;
         width: 100%;
         font-size: 16px;
-        border: 1px solid #adb5bd;
-        color: black;
+        border: 1px solid #ccc;
     }
 
     th {
         background-color: #d62828;
         color: white;
-        padding: 12px;
+        padding: 10px;
         text-align: left;
         font-size: 16px;
         font-weight: bold;
-        border: 1px solid #adb5bd;
+        border: 1px solid #ccc;
     }
 
     td {
         background-color: #ffffff;
         padding: 10px;
-        border: 1px solid #dee2e6;
-        color: black !important;
-        font-size: 15px;
+        border: 1px solid #ddd;
+        color: #212529;
     }
 
     tr:hover td {
-        background-color: #f1f3f5 !important;
+        background-color: #f8f9fa;
     }
 
-    /* ============================== */
-    /*     st.dataframe (modern)     */
-    /* ============================== */
-
+    /* Untuk dataframe (st.dataframe) agar tidak pudar */
     .stDataFrame {
-        background-color: #ffffff;
+        background-color: white;
         border-radius: 10px;
         padding: 10px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.04);
-        color: black !important;
-        font-size: 15px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.05);
     }
 
-    /* ============================== */
-    /*   Perjelas teks markdown      */
-    /* ============================== */
-
-    .markdown-text-container {
-        color: black !important;
-    }
-
-    /* ============================== */
-    /*      Sidebar tetap gelap      */
-    /* ============================== */
-
+    /* Sidebar juga rapikan */
     [data-testid="stSidebar"] {
         background-color: #343a40;
         color: white;
     }
 
-    /* ============================== */
-    /*     Label/BADGE Wilayah       */
-    /* ============================== */
-
+    /* Label atau badge wilayah dalam tabel */
     .css-1wivap2, .css-qrbaxs, .css-1cpxqw2 {
-        background-color: #dee2e6 !important;
-        color: #212529 !important;
+        background-color: #edf2f4 !important;
+        color: #2b2d42 !important;
         border-radius: 8px;
         padding: 6px 12px;
         margin: 2px;
@@ -134,6 +71,70 @@ st.markdown("""
         font-size: 14px;
     }
 </style>
+""", unsafe_allow_html=True)
+
+# =============================
+# CUSTOM BACKGROUND & STYLING
+# =============================
+st.markdown("""
+    <style>
+        /* Background utama (halus dan elegan) */
+        .stApp {
+            background-color: #f8f9fa;
+            background-image: linear-gradient(to bottom right, #ffffff, #eaeaea);
+        }
+
+        /* Sidebar: warna abu gelap dan teks putih */
+        [data-testid="stSidebar"] {
+            background-color: #343a40;
+            color: white;
+        }
+
+        [data-testid="stSidebar"] .css-1v0mbdj {
+            color: white;
+        }
+
+        /* Teks di sidebar */
+        .css-h5rgaw {
+            color: white;
+        }
+
+        /* Header & judul */
+        h1, h2, h3 {
+            color: #2b2d42 !important;
+        }
+
+        /* Konten teks markdown */
+        .markdown-text-container {
+            color: #1b1b1b;
+        }
+
+        /* Tombol */
+        .stButton>button {
+            background-color: #d62828;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5em 1em;
+            font-weight: bold;
+        }
+
+        .stButton>button:hover {
+            background-color: #a61e1e;
+            color: white;
+        }
+
+        /* Tabs */
+        div[data-baseweb="tab"] {
+            background-color: #f1f1f1;
+            border-radius: 6px;
+        }
+
+        /* Dataframe background */
+        .stDataFrame {
+            background-color: white;
+        }
+    </style>
 """, unsafe_allow_html=True)
 
 # =============================
@@ -258,7 +259,7 @@ elif menu == "Preprocessing":
 
             with tab1:
                 st.markdown("### 📊 Statistik Deskriptif")
-                st.markdown(df.describe().to_html(classes='table', border=0), unsafe_allow_html=True)
+                st.dataframe(df.describe())
                 st.markdown("### 🔥 Distribusi Faktor")
                 fig, axs = plt.subplots(1, len(selected), figsize=(16, 4))
                 for i, col in enumerate(selected):
