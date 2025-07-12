@@ -219,6 +219,11 @@ elif menu == "Pemodelan OPTICS":
             optics = OPTICS(min_samples=min_samples, xi=xi, min_cluster_size=min_cluster_size)
             optics.fit(st.session_state.X_std)
             st.session_state.labels_op = optics.labels_
+            # Setelah clustering berhasil:
+            st.session_state.min_samples = min_samples
+            st.session_state.xi = xi
+            st.session_state.min_cluster_size = min_cluster_size
+
 
             reachability = optics.reachability_
             ordering = optics.ordering_
@@ -374,29 +379,31 @@ elif menu == "Evaluasi Model":
 # =============================
 elif menu == "Ringkasan Hasil":
     st.header("📌 Ringkasan Akhir")
+    
     if st.session_state.labels_op is None or st.session_state.df is None:
-        st.warning("Belum ada hasil clustering atau data tidak tersedia.")
+        st.warning("Belum ada hasil clustering.")
     else:
         df = st.session_state.df.copy()
-        labels = st.session_state.labels_op
 
-        if len(df) != len(labels):
+        # Pastikan panjang data cocok
+        if len(df) != len(st.session_state.labels_op):
             st.error("❌ Jumlah data dan label tidak sesuai. Pastikan preprocessing dan pemodelan telah dijalankan dengan benar.")
         else:
-            df['Cluster'] = labels
+            df['Cluster'] = st.session_state.labels_op
+
             st.markdown("### 📍 Parameter yang Digunakan")
-            st.write(f"min_samples: {min_samples}")
-            st.write(f"xi: {xi}")
-            st.write(f"min_cluster_size: {min_cluster_size}")
+            st.write(f"min_samples: {st.session_state.get('min_samples', '-')}")
+            st.write(f"xi: {st.session_state.get('xi', '-')}")
+            st.write(f"min_cluster_size: {st.session_state.get('min_cluster_size', '-')}")
 
             st.markdown("### 📊 Distribusi Klaster")
             st.dataframe(df.groupby('Cluster')['wilayah'].apply(list).rename("Wilayah dalam Klaster"))
 
             if 'X_std' in st.session_state and 'labels_op' in st.session_state:
-                mask = labels != -1
+                mask = st.session_state.labels_op != -1
                 if mask.sum() >= 2:
-                    sil = silhouette_score(st.session_state.X_std[mask], labels[mask])
-                    dbi = davies_bouldin_score(st.session_state.X_std[mask], labels[mask])
+                    sil = silhouette_score(st.session_state.X_std[mask], st.session_state.labels_op[mask])
+                    dbi = davies_bouldin_score(st.session_state.X_std[mask], st.session_state.labels_op[mask])
                     st.write(f"Silhouette Score: {sil:.3f}")
                     st.write(f"Davies-Bouldin Index: {dbi:.3f}")
 
