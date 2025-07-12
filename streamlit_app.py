@@ -22,11 +22,12 @@ st.markdown("""
         width: 100%;
         font-size: 16px;
         border: 1px solid #ccc;
+        color: #212529;
     }
 
     th {
-        background-color: #d62828;
-        color: white;
+        background-color: #343a40;
+        color: white !important;
         padding: 10px;
         text-align: left;
         font-size: 16px;
@@ -38,22 +39,23 @@ st.markdown("""
         background-color: #ffffff;
         padding: 10px;
         border: 1px solid #ddd;
-        color: #212529;
+        color: #212529 !important;
     }
 
     tr:hover td {
-        background-color: #f8f9fa;
+        background-color: #f1f1f1;
     }
 
-    /* Untuk dataframe (st.dataframe) agar tidak pudar */
+    /* Dataframe container styling */
     .stDataFrame {
         background-color: white;
         border-radius: 10px;
         padding: 10px;
         box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        color: #212529;
     }
 
-    /* Sidebar juga rapikan */
+    /* Sidebar */
     [data-testid="stSidebar"] {
         background-color: #343a40;
         color: white;
@@ -61,8 +63,8 @@ st.markdown("""
 
     /* Label atau badge wilayah dalam tabel */
     .css-1wivap2, .css-qrbaxs, .css-1cpxqw2 {
-        background-color: #edf2f4 !important;
-        color: #2b2d42 !important;
+        background-color: #dee2e6 !important;
+        color: #212529 !important;
         border-radius: 8px;
         padding: 6px 12px;
         margin: 2px;
@@ -71,70 +73,6 @@ st.markdown("""
         font-size: 14px;
     }
 </style>
-""", unsafe_allow_html=True)
-
-# =============================
-# CUSTOM BACKGROUND & STYLING
-# =============================
-st.markdown("""
-    <style>
-        /* Background utama (halus dan elegan) */
-        .stApp {
-            background-color: #f8f9fa;
-            background-image: linear-gradient(to bottom right, #ffffff, #eaeaea);
-        }
-
-        /* Sidebar: warna abu gelap dan teks putih */
-        [data-testid="stSidebar"] {
-            background-color: #343a40;
-            color: white;
-        }
-
-        [data-testid="stSidebar"] .css-1v0mbdj {
-            color: white;
-        }
-
-        /* Teks di sidebar */
-        .css-h5rgaw {
-            color: white;
-        }
-
-        /* Header & judul */
-        h1, h2, h3 {
-            color: #2b2d42 !important;
-        }
-
-        /* Konten teks markdown */
-        .markdown-text-container {
-            color: #1b1b1b;
-        }
-
-        /* Tombol */
-        .stButton>button {
-            background-color: #d62828;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 0.5em 1em;
-            font-weight: bold;
-        }
-
-        .stButton>button:hover {
-            background-color: #a61e1e;
-            color: white;
-        }
-
-        /* Tabs */
-        div[data-baseweb="tab"] {
-            background-color: #f1f1f1;
-            border-radius: 6px;
-        }
-
-        /* Dataframe background */
-        .stDataFrame {
-            background-color: white;
-        }
-    </style>
 """, unsafe_allow_html=True)
 
 # =============================
