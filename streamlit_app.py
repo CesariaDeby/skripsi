@@ -190,10 +190,7 @@ elif menu == "Preprocessing":
             st.subheader("📈 Setelah Standarisasi")
             st.dataframe(after)
             st.info("Standardisasi penting agar semua fitur memiliki skala yang sama.")
-
-# (Lanjutan dari file sebelumnya...)
-# ==============================================================
-# Bagian PEMODELAN OPTICS, EVALUASI, dan RINGKASAN HASIL
+            st.session_state.df = df 
 
 # =============================
 # PEMODELAN OPTICS
