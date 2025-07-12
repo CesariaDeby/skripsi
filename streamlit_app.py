@@ -18,29 +18,38 @@ st.set_page_config(page_title="Clustering Perceraian Jawa Timur", page_icon="ðŸ’
 # =============================
 st.markdown("""
     <style>
-        /* Background color */
+        /* Background utama (halus dan elegan) */
         .stApp {
-            background-color: #f9f9f9;
-            background-image: linear-gradient(to bottom right, #fdfcfb, #e2d1c3);
+            background-color: #f8f9fa;
+            background-image: linear-gradient(to bottom right, #ffffff, #eaeaea);
         }
 
-        /* Sidebar background and text color */
+        /* Sidebar: warna abu gelap dan teks putih */
         [data-testid="stSidebar"] {
-            background-color: #fefae0;
-            color: #000000;
+            background-color: #343a40;
+            color: white;
         }
 
-        /* Header & title styling */
+        [data-testid="stSidebar"] .css-1v0mbdj {
+            color: white;
+        }
+
+        /* Teks di sidebar */
+        .css-h5rgaw {
+            color: white;
+        }
+
+        /* Header & judul */
         h1, h2, h3 {
             color: #2b2d42 !important;
         }
 
-        /* Markdown content color */
+        /* Konten teks markdown */
         .markdown-text-container {
             color: #1b1b1b;
         }
 
-        /* Buttons */
+        /* Tombol */
         .stButton>button {
             background-color: #d62828;
             color: white;
@@ -57,7 +66,7 @@ st.markdown("""
 
         /* Tabs */
         div[data-baseweb="tab"] {
-            background-color: #f1faee;
+            background-color: #f1f1f1;
             border-radius: 6px;
         }
 
