@@ -13,6 +13,45 @@ import base64
 
 st.set_page_config(page_title="Clustering Perceraian Jawa Timur", page_icon="💔", layout="wide")
 
+# ================================
+# TAMBAHAN CSS UNTUK STYLING TABEL
+# ================================
+st.markdown("""
+<style>
+/* HEADER TABEL */
+thead tr th {
+    background-color: #6c757d !important; /* abu gelap selaras sidebar */
+    color: white !important;
+    font-size: 15px;
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    text-align: left;
+}
+
+/* ISI TABEL */
+tbody tr td {
+    background-color: #f8f9fa !important;  /* abu muda */
+    color: #212529 !important;             /* teks hitam */
+    font-size: 14px;
+    padding: 10px;
+    border: 1px solid #dee2e6;
+}
+
+/* HOVER ROW */
+tbody tr:hover td {
+    background-color: #e9ecef !important;
+}
+
+/* Gaya umum tabel */
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    width: 100%;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 st.markdown("""
 <style>
     /* ============================== */
@@ -219,7 +258,7 @@ elif menu == "Preprocessing":
 
             with tab1:
                 st.markdown("### 📊 Statistik Deskriptif")
-                st.dataframe(df.describe())
+                st.markdown(df.describe().to_html(classes='table', border=0), unsafe_allow_html=True)
                 st.markdown("### 🔥 Distribusi Faktor")
                 fig, axs = plt.subplots(1, len(selected), figsize=(16, 4))
                 for i, col in enumerate(selected):
