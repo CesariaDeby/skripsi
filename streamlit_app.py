@@ -533,7 +533,8 @@ elif menu == "Evaluasi Model":
             # Silhouette Score
             st.markdown("### 📈 Silhouette Score")
             st.markdown("""
-            **Silhouette Score** mengukur seberapa baik setiap data berada dalam klasternya.  
+            **Silhouette Score** mengukur seberapa baik setiap data berada dalam klasternya.
+            """)
             st.write(f"Nilai Silhouette: **{sil:.3f}**")
             st.dataframe(pd.DataFrame({
                 'Rentang': ['> 0.7', '0.5 - 0.7', '0.25 - 0.5', '< 0.25'],
@@ -545,6 +546,7 @@ elif menu == "Evaluasi Model":
             st.markdown("""
             **Davies-Bouldin Index (DBI)** mengukur seberapa baik klaster terpisah satu sama lain.  
             Nilai DBI **lebih rendah lebih baik**, karena menunjukkan antar-klaster yang lebih terpisah dan kompak.
+            """)
             st.write(f"Nilai DBI: **{dbi:.3f}**")
             st.dataframe(pd.DataFrame({
                 'Rentang': ['0 - 1', '1 - 2', '> 2'],
