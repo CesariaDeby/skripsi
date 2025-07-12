@@ -191,6 +191,10 @@ elif menu == "Preprocessing":
             st.dataframe(after)
             st.info("Standardisasi penting agar semua fitur memiliki skala yang sama.")
 
+# (Lanjutan dari file sebelumnya...)
+# ==============================================================
+# Bagian PEMODELAN OPTICS, EVALUASI, dan RINGKASAN HASIL
+
 # =============================
 # PEMODELAN OPTICS
 # =============================
@@ -216,45 +220,98 @@ elif menu == "Pemodelan OPTICS":
             optics.fit(st.session_state.X_std)
             st.session_state.labels_op = optics.labels_
 
-            # Core distances
-            core_distances = optics.core_distances_
-            st.markdown("### 📏 Core Distance")
-            st.write(f"Total data points: {len(core_distances)}")
-            st.write(f"Core points found: {(core_distances > 0).sum()}")
-            st.write(f"Non-core points: {(core_distances == 0).sum()}")
-            st.write(pd.Series(core_distances).describe()[['mean','std','min','max']].rename("Core Distance Stats"))
-
-            # Reachability distances
             reachability = optics.reachability_
-            reachability_clean = reachability[np.isfinite(reachability)]
-            st.markdown("### 🔗 Reachability Distance")
-            st.write(f"Finite reachability distances: {len(reachability_clean)}")
-            st.write(f"Infinite reachability distances: {(~np.isfinite(reachability)).sum()}")
-            st.write(pd.Series(reachability_clean).describe()[['mean','std','min','max']].rename("Reachability Stats"))
+            ordering = optics.ordering_
+            labels_op = optics.labels_
 
-            # Distribusi klaster
-            labels = optics.labels_
-            n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
-            st.markdown("### 📊 Distribusi Klaster")
-            dist_df = pd.Series(labels).value_counts().sort_index()
-            for k, v in dist_df.items():
-                name = f"Cluster {k}" if k != -1 else "Noise"
-                st.write(f"{name}: {v} points ({(v / len(labels) * 100):.1f}%)")
+            # Reachability plot update with detailed visualization
+            reachability_clean = np.where(np.isinf(reachability), np.nan, reachability)
+            finite_reach = reachability_clean[~np.isnan(reachability_clean)]
 
-            # Reachability plot
-            st.markdown("### 📉 Reachability Plot")
-            space = np.arange(len(st.session_state.X_std))
-            fig, ax = plt.subplots(figsize=(14, 6))
+            if len(finite_reach) > 0:
+                max_reach = np.nanmax(reachability_clean)
+                reachability_plot = np.where(np.isinf(reachability), max_reach * 1.2, reachability)
+            else:
+                max_reach = 1.0
+                reachability_plot = np.where(np.isinf(reachability), 1.2, reachability)
+
+            reachability_ordered = reachability_plot[ordering]
+            labels_ordered = labels_op[ordering]
+            space = np.arange(len(labels_ordered))
+
+            unique_labels_ordered = np.unique(labels_ordered)
+            cluster_labels = sorted(label for label in unique_labels_ordered if label != -1)
             colors = plt.cm.tab10(np.linspace(0, 1, 10))
-            for klass, color in zip(range(0, n_clusters), colors):
-                Xk = space[labels == klass]
-                Rk = reachability[labels == klass]
-                ax.plot(Xk, Rk, marker='.', linestyle='', ms=5, label=f"Cluster {klass}", color=color)
-            ax.plot(space[labels == -1], reachability[labels == -1], 'k.', label='Noise')
-            ax.set_ylabel('Reachability Distance')
-            ax.set_title('Reachability Plot')
-            ax.legend()
-            st.pyplot(fig)
+            label_to_color = {-1: 'black'}
+            for i, label in enumerate(cluster_labels):
+                label_to_color[label] = colors[i % 10]
+
+            plt.figure(figsize=(15, 8))
+            plt.plot(space, reachability_ordered, 'k-', linewidth=1, alpha=0.3, label='Reachability Profile')
+            for label in sorted(label_to_color.keys()):
+                mask = labels_ordered == label
+                color = label_to_color[label]
+                label_text = 'Noise' if label == -1 else f'Cluster {label}'
+                plt.scatter(space[mask], reachability_ordered[mask], c=[color], s=40, alpha=0.9, label=label_text, edgecolors='black', linewidths=0.3)
+
+            def detect_peaks_valleys(data, prominence_factor=0.1):
+                from scipy.signal import find_peaks
+                data_range = np.max(data) - np.min(data)
+                prominence = data_range * prominence_factor
+                peaks, peak_props = find_peaks(data, prominence=prominence, distance=5)
+                valleys, valley_props = find_peaks(-data, prominence=prominence, distance=5)
+                return peaks, valleys, peak_props, valley_props
+
+            peaks, valleys, peak_props, valley_props = detect_peaks_valleys(reachability_ordered, prominence_factor=0.15)
+
+            if len(peaks) > 0:
+                plt.scatter(space[peaks], reachability_ordered[peaks], marker='^', s=100, c='red', alpha=0.8,
+                            label=f'Peaks ({len(peaks)}) - Cluster Boundaries', edgecolors='darkred', linewidth=2, zorder=5)
+                for i, idx in enumerate(peaks):
+                    plt.annotate(f'P{i+1}', xy=(space[idx], reachability_ordered[idx]),
+                                 xytext=(5, 10), textcoords='offset points', fontsize=9, fontweight='bold', color='red',
+                                 bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.8))
+
+            if len(valleys) > 0:
+                plt.scatter(space[valleys], reachability_ordered[valleys], marker='v', s=100, c='blue', alpha=0.8,
+                            label=f'Valleys ({len(valleys)}) - Cluster Cores', edgecolors='darkblue', linewidth=2, zorder=5)
+                for i, idx in enumerate(valleys):
+                    plt.annotate(f'V{i+1}', xy=(space[idx], reachability_ordered[idx]),
+                                 xytext=(5, -15), textcoords='offset points', fontsize=9, fontweight='bold', color='blue',
+                                 bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.8))
+
+            if len(finite_reach) > 0:
+                xi_threshold = np.percentile(finite_reach, 85)
+                plt.axhline(y=xi_threshold, color='orange', linestyle='--', alpha=0.7, linewidth=2,
+                            label=f'Xi Threshold (≈{xi_threshold:.3f})')
+                plt.axhspan(0, xi_threshold, alpha=0.1, color='green', label='Cluster Extraction Zone')
+
+            cluster_boundaries = []
+            for i in range(len(unique_labels_ordered) - 1):
+                current_label = unique_labels_ordered[i]
+                next_label = unique_labels_ordered[i + 1]
+                for j in range(len(labels_ordered) - 1):
+                    if labels_ordered[j] == current_label and labels_ordered[j + 1] == next_label:
+                        cluster_boundaries.append(j + 0.5)
+                        break
+
+            for boundary in cluster_boundaries:
+                plt.axvline(x=boundary, color='gray', linestyle=':', alpha=0.5, linewidth=1)
+
+            plt.title(f"OPTICS Reachability Plot with Peaks & Valleys Analysis", fontsize=16, fontweight='bold', pad=20)
+            plt.xlabel("Data Point Index (OPTICS Ordering)", fontsize=12)
+            plt.ylabel("Reachability Distance", fontsize=12)
+            plt.legend(title="Cluster", fontsize=9, title_fontsize=10, loc='upper right', bbox_to_anchor=(1.25, 1))
+            plt.grid(True, linestyle='--', alpha=0.3)
+            plt.tight_layout()
+            plt.subplots_adjust(bottom=0.15)
+
+            st.pyplot(plt)
+
+            st.markdown("### 🔧 Parameter yang digunakan:")
+            st.write(f"min_samples: {min_samples}")
+            st.write(f"xi: {xi}")
+            st.write(f"min_cluster_size: {min_cluster_size}")
 
 # =============================
 # EVALUASI MODEL
@@ -293,28 +350,33 @@ elif menu == "Evaluasi Model":
 # =============================
 elif menu == "Ringkasan Hasil":
     st.header("📌 Ringkasan Akhir")
-    if st.session_state.labels_op is None:
-        st.warning("Belum ada hasil clustering.")
+    if st.session_state.labels_op is None or st.session_state.df is None:
+        st.warning("Belum ada hasil clustering atau data tidak tersedia.")
     else:
         df = st.session_state.df.copy()
-        df['Cluster'] = st.session_state.labels_op
-        st.markdown("### 📍 Parameter yang Digunakan")
-        st.write(f"min_samples: {min_samples}")
-        st.write(f"xi: {xi}")
-        st.write(f"min_cluster_size: {min_cluster_size}")
+        labels = st.session_state.labels_op
 
-        st.markdown("### 📊 Distribusi Klaster")
-        st.dataframe(df.groupby('Cluster')['wilayah'].apply(list).rename("Wilayah dalam Klaster"))
+        if len(df) != len(labels):
+            st.error("❌ Jumlah data dan label tidak sesuai. Pastikan preprocessing dan pemodelan telah dijalankan dengan benar.")
+        else:
+            df['Cluster'] = labels
+            st.markdown("### 📍 Parameter yang Digunakan")
+            st.write(f"min_samples: {min_samples}")
+            st.write(f"xi: {xi}")
+            st.write(f"min_cluster_size: {min_cluster_size}")
 
-        if 'X_std' in st.session_state and 'labels_op' in st.session_state:
-            mask = st.session_state.labels_op != -1
-            if mask.sum() >= 2:
-                sil = silhouette_score(st.session_state.X_std[mask], st.session_state.labels_op[mask])
-                dbi = davies_bouldin_score(st.session_state.X_std[mask], st.session_state.labels_op[mask])
-                st.write(f"Silhouette Score: {sil:.3f}")
-                st.write(f"Davies-Bouldin Index: {dbi:.3f}")
+            st.markdown("### 📊 Distribusi Klaster")
+            st.dataframe(df.groupby('Cluster')['wilayah'].apply(list).rename("Wilayah dalam Klaster"))
 
-        csv = df[['wilayah', 'Cluster']].to_csv(index=False)
-        b64 = base64.b64encode(csv.encode()).decode()
-        href = f'<a href="data:file/csv;base64,{b64}" download="hasil_klaster.csv">📥 Unduh Ringkasan Hasil (.csv)</a>'
-        st.markdown(href, unsafe_allow_html=True)
+            if 'X_std' in st.session_state and 'labels_op' in st.session_state:
+                mask = labels != -1
+                if mask.sum() >= 2:
+                    sil = silhouette_score(st.session_state.X_std[mask], labels[mask])
+                    dbi = davies_bouldin_score(st.session_state.X_std[mask], labels[mask])
+                    st.write(f"Silhouette Score: {sil:.3f}")
+                    st.write(f"Davies-Bouldin Index: {dbi:.3f}")
+
+            csv = df[['wilayah', 'Cluster']].to_csv(index=False)
+            b64 = base64.b64encode(csv.encode()).decode()
+            href = f'<a href="data:file/csv;base64,{b64}" download="hasil_klaster.csv">📥 Unduh Ringkasan Hasil (.csv)</a>'
+            st.markdown(href, unsafe_allow_html=True)
