@@ -13,6 +13,56 @@ import base64
 
 st.set_page_config(page_title="Clustering Perceraian Jawa Timur", page_icon="💔", layout="wide")
 
+# Tambahan CSS untuk tabel agar lebih kontras dan selaras
+st.markdown("""
+    <style>
+        /* DataFrame container */
+        .stDataFrame {
+            background-color: white;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        /* Tabel dalam markdown atau hasil groupby list wilayah */
+        table {
+            background-color: white;
+            border-collapse: collapse;
+            width: 100%;
+            border: 1px solid #dee2e6;
+            font-size: 16px;
+        }
+
+        th {
+            background-color: #d62828;
+            color: white;
+            padding: 8px;
+            text-align: left;
+        }
+
+        td {
+            background-color: #fdfdfd;
+            padding: 8px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        tr:hover td {
+            background-color: #f1f1f1;
+        }
+
+        /* Badges dalam sel (list wilayah) */
+        .css-1wivap2, .css-qrbaxs {
+            background-color: #edf2f4 !important;
+            color: #2b2d42 !important;
+            border-radius: 8px;
+            padding: 6px 12px;
+            margin: 2px;
+            display: inline-block;
+            font-weight: 500;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 # =============================
 # CUSTOM BACKGROUND & STYLING
 # =============================
