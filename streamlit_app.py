@@ -224,25 +224,35 @@ elif menu == "Upload Data & Pilih Faktor":
     st.header("📤 Upload Data & Pilih Faktor")
     uploaded_file = st.file_uploader("Unggah file Excel (.xlsx)", type="xlsx")
 
-    if uploaded_file:
-        df = pd.read_excel(uploaded_file)
-        df.rename(columns={
-            'Kabupaten/Kota': 'wilayah',
-            'Fakor Perceraian - Perselisihan dan Pertengkaran Terus Menerus': 'perselisihan dan pertengkaran',
-            'Fakor Perceraian - Ekonomi': 'ekonomi',
-            'Fakor Perceraian - Kekerasan Dalam Rumah Tangga': 'KDRT',
-            'Fakor Perceraian - Meninggalkan Salah satu Pihak': 'meninggalkan salah satu pihak',
-            'Fakor Perceraian - Zina': 'zina',
-        }, inplace=True)
-        st.session_state.df = df
+    if uploaded_file is not None:
+        try:
+            df = pd.read_excel(uploaded_file)
 
-        st.success("✅ Data berhasil diunggah!")
-        all_factors = ['perselisihan dan pertengkaran', 'ekonomi', 'KDRT', 'meninggalkan salah satu pihak', 'zina']
-        selected = st.multiselect("Pilih faktor yang ingin digunakan", all_factors, default=all_factors)
-        st.session_state.selected_features = selected
+            # Rename kolom
+            df.rename(columns={
+                'Kabupaten/Kota': 'wilayah',
+                'Fakor Perceraian - Perselisihan dan Pertengkaran Terus Menerus': 'perselisihan dan pertengkaran',
+                'Fakor Perceraian - Ekonomi': 'ekonomi',
+                'Fakor Perceraian - Kekerasan Dalam Rumah Tangga': 'KDRT',
+                'Fakor Perceraian - Meninggalkan Salah satu Pihak': 'meninggalkan salah satu pihak',
+                'Fakor Perceraian - Zina': 'zina',
+            }, inplace=True)
 
-        st.subheader("🧾 Pratinjau Data")
-        st.dataframe(df[['wilayah'] + selected].set_index('wilayah'))
+            if 'wilayah' not in df.columns:
+                st.error("❌ Kolom 'Kabupaten/Kota' tidak ditemukan atau gagal diubah jadi 'wilayah'.")
+            else:
+                st.session_state.df = df
+                st.success("✅ Data berhasil diunggah!")
+
+                all_factors = ['perselisihan dan pertengkaran', 'ekonomi', 'KDRT', 'meninggalkan salah satu pihak', 'zina']
+                selected = st.multiselect("Pilih faktor yang ingin digunakan", all_factors, default=all_factors)
+                st.session_state.selected_features = selected
+
+                st.subheader("🧾 Pratinjau Data")
+                st.dataframe(df[['wilayah'] + selected].set_index('wilayah'))
+
+        except Exception as e:
+            st.error(f"❌ Gagal membaca file. Pastikan format kolom sesuai. Error: {e}")
 
 # =============================
 # PREPROCESSING
