@@ -78,35 +78,30 @@ st.markdown("""
 # =============================
 st.markdown("""
     <style>
-        /* Background utama (halus dan elegan) */
+        /* ===== LATAR BELAKANG UTAMA ===== */
         .stApp {
-            background-color: #f8f9fa;
-            background-image: linear-gradient(to bottom right, #ffffff, #eaeaea);
+            background-color: #fff5f5;
+            background-image: linear-gradient(to bottom right, #fff5f5, #ffeaea);
         }
 
-        /* Sidebar: warna abu gelap dan teks putih */
+        /* ===== SIDEBAR (MERAH LEMBUT MENYATU) ===== */
         [data-testid="stSidebar"] {
-            background-color: #343a40;
-            color: white;
+            background-color: #f8dcdc; /* merah muda elegan */
+            color: #4a0000;
         }
 
         [data-testid="stSidebar"] .css-1v0mbdj {
-            color: white;
+            color: #4a0000;
         }
 
-        /* Teks di sidebar */
-        .css-h5rgaw {
-            color: white;
+        /* Sidebar teks */
+        .css-h5rgaw, .css-10trblm {
+            color: #4a0000 !important;
         }
 
-        /* Header & judul */
+        /* HEADER DAN TEKS */
         h1, h2, h3 {
-            color: #2b2d42 !important;
-        }
-
-        /* Konten teks markdown */
-        .markdown-text-container {
-            color: #1b1b1b;
+            color: #8b0000 !important;
         }
 
         /* Tombol */
@@ -124,15 +119,41 @@ st.markdown("""
             color: white;
         }
 
-        /* Tabs */
-        div[data-baseweb="tab"] {
-            background-color: #f1f1f1;
-            border-radius: 6px;
+        /* Tabel dan DataFrame */
+        table {
+            background-color: white;
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 16px;
+            border: 1px solid #ccc;
         }
 
-        /* Dataframe background */
+        th {
+            background-color: #d62828;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-size: 16px;
+            font-weight: bold;
+            border: 1px solid #ccc;
+        }
+
+        td {
+            background-color: #ffffff;
+            padding: 10px;
+            border: 1px solid #ddd;
+            color: #212529;
+        }
+
+        tr:hover td {
+            background-color: #f8f9fa;
+        }
+
         .stDataFrame {
             background-color: white;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
         }
     </style>
 """, unsafe_allow_html=True)
