@@ -84,19 +84,19 @@ st.markdown("""
             background-image: linear-gradient(to bottom right, #fff5f5, #ffeaea);
         }
 
-        /* ===== SIDEBAR (MERAH LEMBUT MENYATU) ===== */
+        /* ===== SIDEBAR (MERAH MUDA GELAP) ===== */
         [data-testid="stSidebar"] {
-            background-color: #f8dcdc; /* merah muda elegan */
-            color: #4a0000;
+            background-color: #dca8a8; /* merah muda agak gelap */
+            color: #3b0000;
         }
 
         [data-testid="stSidebar"] .css-1v0mbdj {
-            color: #4a0000;
+            color: #3b0000;
         }
 
         /* Sidebar teks */
         .css-h5rgaw, .css-10trblm {
-            color: #4a0000 !important;
+            color: #3b0000 !important;
         }
 
         /* HEADER DAN TEKS */
