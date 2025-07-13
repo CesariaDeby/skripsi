@@ -247,9 +247,6 @@ elif menu == "Upload Data & Pilih Faktor":
 # =============================
 # PREPROCESSING
 # =============================
-# =============================
-# PREPROCESSING
-# =============================
 elif menu == "Preprocessing":
     if st.session_state.df is None:
         st.warning("Silakan unggah data terlebih dahulu.")
@@ -266,6 +263,13 @@ elif menu == "Preprocessing":
         else:
             df = df[expected_cols].copy()
             df = df[df['Jumlah Cerai'] > 0]
+
+            # Tambahkan struktur dataset di awal
+            st.subheader("🧬 Struktur Dataset")
+            buffer = io.StringIO()
+            df.info(buf=buffer)
+            info_str = buffer.getvalue()
+            st.code(info_str, language='text')
 
             tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
                 "Statistik & Korelasi", "Cek Missing Value", "Tangani Missing Value",
