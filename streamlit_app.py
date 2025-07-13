@@ -257,23 +257,26 @@ elif menu == "Preprocessing":
         # Pastikan kolom wajib tersedia
         expected_cols = ['wilayah', 'Jumlah Cerai'] + selected
         missing_cols = [col for col in expected_cols if col not in df.columns]
-
+        
         if missing_cols:
             st.error(f"❌ Kolom berikut tidak ditemukan dalam data: {missing_cols}")
         else:
             df = df[expected_cols].copy()
             df = df[df['Jumlah Cerai'] > 0]
-
-            # Tambahkan struktur dataset di awal
+        
+            # Tambahkan struktur dataset di awal (dalam bentuk tabel)
             st.subheader("🧬 Struktur Dataset")
-            buffer = io.StringIO()
-            df.info(buf=buffer)
-            info_str = buffer.getvalue()
-            st.code(info_str, language='text')
-
+            df_info = pd.DataFrame({
+                "Kolom": df.columns,
+                "Jumlah Non-Null": df.notnull().sum().values,
+                "Tipe Data": df.dtypes.astype(str).values
+            })
+            st.dataframe(df_info)
+        
             tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
                 "Statistik & Korelasi", "Cek Missing Value", "Tangani Missing Value",
                 "Proporsi", "Cek Outlier", "Tangani Outlier", "Standarisasi"])
+
 
             with tab1:
                 st.markdown("### 📊 Statistik Deskriptif")
