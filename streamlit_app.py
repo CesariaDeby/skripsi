@@ -212,10 +212,39 @@ if menu == "Beranda":
     
     # 💡 GUNAKAN INI UNTUK MENAMPILKAN GAMBAR
     # Buat layout: kolom kosong - kolom isi - kolom kosong
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3, col4 = st.columns([1, 2, 1, 2])
     
-    with col2:
+    with col3:
         st.image("alur_op.png", caption="Diagram Alur Proses OPTICS", width=200)
+
+    # Penjelasan alur proses
+    st.markdown("""
+    ### 🔄 Alur Proses OPTICS
+    
+    Berikut adalah tahapan utama dalam algoritma OPTICS sebagaimana tergambar pada diagram di atas:
+    
+    1. **OPTICS**
+       - Inisialisasi algoritma dengan parameter `min_samples` dan `xi`.
+       - Mulai proses pemetaan kepadatan data.
+    
+    2. **Deteksi Titik Inti (Core Distance)**
+       - Hitung jarak dari setiap titik ke tetangga ke-`min_samples`.
+       - Jika titik memiliki cukup tetangga dalam radius tertentu, maka dianggap sebagai titik inti (*core point*).
+    
+    3. **Jarak Keterjangkauan dan Pengurutan Klaster**
+       - Hitung **reachability distance**: jarak aktual atau jarak ke core point yang lebih besar.
+       - Urutkan titik berdasarkan keterjangkauannya untuk membentuk urutan pemrosesan (cluster ordering).
+    
+    4. **Ekstraksi Klaster (Reachability Plot)**
+       - Buat **Reachability Plot** dari urutan titik tersebut.
+       - Visualisasi ini menunjukkan struktur klaster sebagai lembah (klaster padat) dan puncak (batas/noise).
+    
+    5. **Evaluasi Hasil**
+       - Gunakan metrik evaluasi seperti:
+         - **Silhouette Score**: mengukur seberapa baik setiap titik berada di dalam klasternya.
+         - **Davies-Bouldin Index (DBI)**: mengukur rasio jarak intra dan antar klaster.
+       - Semakin tinggi Silhouette dan semakin rendah DBI → semakin baik hasil klasterisasi.
+    """)
 
     st.markdown("""
     ### ✨ Mengapa OPTICS?
