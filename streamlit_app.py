@@ -211,7 +211,11 @@ if menu == "Beranda":
     """)
     
     # 💡 GUNAKAN INI UNTUK MENAMPILKAN GAMBAR
-    st.image("alur_op.png", caption="Diagram Alur Proses OPTICS", width=250)
+    # Buat layout: kolom kosong - kolom isi - kolom kosong
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        st.image("alur_op.png", caption="Diagram Alur Proses OPTICS", width=200)
 
     st.markdown("""
     ### ✨ Mengapa OPTICS?
