@@ -211,7 +211,7 @@ if menu == "Beranda":
     """)
     
     # 💡 GUNAKAN INI UNTUK MENAMPILKAN GAMBAR
-    st.image("Screenshot 2025-07-14 153916.png", caption="Diagram Alur Proses OPTICS", use_column_width=True)
+    st.image("Screenshot 2025-07-14 153916.png", caption="Diagram Alur Proses OPTICS", width=450)
 
     st.markdown("""
     ### ✨ Mengapa OPTICS?
