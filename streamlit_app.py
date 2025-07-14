@@ -214,7 +214,7 @@ if menu == "Beranda":
     st.markdown(
         """
         <div style="text-align: center;">
-            <img src="alur OPTICS.png" width="200">
+            <img src="alur_op.png" width="200">
             <p style="font-size: 14px; color: gray;">Diagram Alur Proses OPTICS</p>
         </div>
         """,
