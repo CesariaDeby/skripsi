@@ -211,7 +211,15 @@ if menu == "Beranda":
     """)
     
     # 💡 GUNAKAN INI UNTUK MENAMPILKAN GAMBAR
-    st.image("Screenshot 2025-07-14 153916.png", caption="Diagram Alur Proses OPTICS", width=450)
+    st.markdown(
+        """
+        <div style="text-align: center;">
+            <img src="Screenshot 2025-07-14 153916.png" width="450">
+            <p style="font-size: 14px; color: gray;">Diagram Alur Proses OPTICS</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     st.markdown("""
     ### ✨ Mengapa OPTICS?
