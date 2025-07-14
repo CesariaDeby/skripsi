@@ -208,11 +208,10 @@ if menu == "Beranda":
     **OPTICS** (Ordering Points To Identify the Clustering Structure) adalah metode klasterisasi yang dikembangkan sebagai **penyempurnaan dari algoritma DBSCAN**. Keduanya termasuk dalam keluarga **density-based clustering**, yaitu metode yang mengelompokkan data berdasarkan kepadatan titik-titik di sekitarnya.
     Jika DBSCAN hanya mampu mendeteksi klaster dengan satu tingkat kepadatan dan memerlukan parameter epsilon (jarak maksimum antar titik), maka OPTICS lebih fleksibel. OPTICS **tidak membutuhkan nilai epsilon yang pasti di awal** dan mampu menemukan **klaster dengan berbagai bentuk dan kepadatan berbeda secara otomatis**.
     Keunggulan utama OPTICS adalah kemampuannya membuat **Reachability Plot**, yaitu grafik yang membantu kita **melihat struktur klaster secara visual**, termasuk titik-titik yang dianggap sebagai noise.
-
-    # Menampilkan gambar diagram alur OPTICS
-    image = Image.open("Screenshot 2025-07-14 153916.png")
-    st.image(image, caption="Diagram Alur Proses OPTICS", use_column_width=True)
     """)
+    
+    # 💡 GUNAKAN INI UNTUK MENAMPILKAN GAMBAR
+    st.image("Screenshot 2025-07-14 153916.png", caption="Diagram Alur Proses OPTICS", use_column_width=True)
 
     st.markdown("""
     ### ✨ Mengapa OPTICS?
