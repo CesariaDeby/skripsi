@@ -8,6 +8,7 @@ from sklearn.cluster import OPTICS
 from sklearn.metrics import silhouette_score, davies_bouldin_score
 from sklearn.neighbors import NearestNeighbors
 from scipy.signal import find_peaks
+from PIL import Image
 import io
 import base64
 
