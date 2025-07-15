@@ -369,7 +369,7 @@ elif menu == "Preprocessing":
                 st.pyplot(fig)
 
                 st.markdown("### 🔗 Korelasi Pearson")
-                corr = df[selected].corr(method='pearson')  # ⬅️ Pastikan tidak terlalu menjorok
+                corr = df[selected].corr(method='pearson') 
                 fig, ax = plt.subplots(figsize=(8, 5))
                 sns.heatmap(corr, annot=True, cmap='coolwarm', center=0, ax=ax)
                 st.pyplot(fig)
@@ -387,6 +387,26 @@ elif menu == "Preprocessing":
                         return "Korelasi sangat kuat"
                     else:
                         return "Nilai tidak valid"
+
+                # Tampilkan tabel syarat interpretasi setelah fungsi
+                st.markdown("#### 📋 Kriteria Interpretasi Koefisien Korelasi")
+                kriteria_korelasi = pd.DataFrame({
+                    "Nilai r (Koefisien)": [
+                        "0,00 – 0,20",
+                        "0,21 – 0,40",
+                        "0,41 – 0,60",
+                        "0,61 – 0,80",
+                        "0,81 – 1,00"
+                    ],
+                    "Interpretasi": [
+                        "Tidak ada korelasi",
+                        "Korelasi lemah",
+                        "Korelasi sedang",
+                        "Korelasi kuat",
+                        "Korelasi sempurna"
+                    ]
+                })
+                st.dataframe(kriteria_korelasi, use_container_width=True)
             
                 st.markdown("#### 📑 Interpretasi Korelasi:")
                 for i in range(len(corr.columns)):
