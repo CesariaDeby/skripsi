@@ -408,13 +408,29 @@ elif menu == "Preprocessing":
                 })
                 st.dataframe(kriteria_korelasi, use_container_width=True)
             
-                st.markdown("#### 📑 Interpretasi Korelasi:")
+                # Interpretasi antar pasangan dalam bentuk tabel
+                data_interpretasi = []
+                
+                # Loop setiap pasangan kolom dari matriks korelasi
                 for i in range(len(corr.columns)):
                     for j in range(i + 1, len(corr.columns)):
                         kolom_1 = corr.columns[i]
                         kolom_2 = corr.columns[j]
                         r = corr.iloc[i, j]
-                        st.markdown(f"- **{kolom_1}** vs **{kolom_2}** → *r = {r:.3f}* → {interpretasi_korelasi(r)}")
+                        interpretasi = interpretasi_korelasi(r)
+                        pasangan = f"{kolom_1} vs {kolom_2}"
+                        data_interpretasi.append({
+                            "Pasangan Variabel": pasangan,
+                            "Nilai r": round(r, 3),
+                            "Interpretasi": interpretasi
+                        })
+                
+                # Buat DataFrame dari interpretasi
+                df_interpretasi = pd.DataFrame(data_interpretasi)
+                
+                # Tampilkan di Streamlit
+                st.markdown("#### 📑 Tabel Interpretasi Korelasi Antar Faktor")
+                st.dataframe(df_interpretasi, use_container_width=True)
 
             with tab2:
                 st.markdown("### 🔍 Jumlah Missing Value Tiap Faktor")
