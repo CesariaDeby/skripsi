@@ -325,65 +325,66 @@ elif menu == "Preprocessing":
         # Pastikan kolom wajib tersedia
         expected_cols = ['wilayah', 'Jumlah Cerai'] + selected
         missing_cols = [col for col in expected_cols if col not in df.columns]
-        
+
         if missing_cols:
             st.error(f"❌ Kolom berikut tidak ditemukan dalam data: {missing_cols}")
         else:
             df = df[expected_cols].copy()
             df = df[df['Jumlah Cerai'] > 0]
-        
+
             # Tambahkan struktur dataset di awal (dalam bentuk tabel)
             st.subheader("🧬 Struktur Dataset")
 
             # Tentukan jenis data berdasarkan nama kolom
             jenis_data = []
             for kolom in df.columns:
-                if kolom.lower() in ["wilayah", "Kabupaten/Kota"]:
+                if kolom.lower() in ["wilayah", "kabupaten/kota"]:
                     jenis_data.append("Nominal")
                 else:
                     jenis_data.append("Rasio")
-            
+
             # Buat DataFrame struktur dataset
             df_info = pd.DataFrame({
                 "Kolom": df.columns,
                 "Jumlah Non-Null": df.notnull().sum().values,
                 "Jenis Data": jenis_data
             })
-            
+
             st.dataframe(df_info)
 
-            
-            tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
-                "Statistik", "Cek Missing Value", "Tangani Missing Value",
-                "Proporsi", "Cek Outlier", "Tangani Outlier", "Korelasi", "Standarisasi"])
+            # Gunakan sidebar radio sebagai navigasi antar langkah preprocessing
+            subtab = st.sidebar.radio("Tahapan Preprocessing", [
+                "Statistik", "Cek Missing", "Tangani Missing",
+                "Proporsi", "Cek Outlier", "Tangani Outlier",
+                "Korelasi", "Standarisasi"])
 
-            with tab1:
-                st.markdown("### 📊 Statistik Deskriptif")
+            if subtab == "Statistik":
+                st.markdown("### Statistik Deskriptif")
                 st.dataframe(df.describe())
-                st.markdown("### 🔥 Distribusi Faktor")
+                st.markdown("### Distribusi Faktor")
                 fig, axs = plt.subplots(1, len(selected), figsize=(16, 4))
                 for i, col in enumerate(selected):
                     sns.histplot(df[col], kde=True, ax=axs[i])
                     axs[i].set_title(col)
                 st.pyplot(fig)
 
-            with tab2:
-                st.markdown("### 🔍 Jumlah Missing Value Tiap Faktor")
+            elif subtab == "Cek Missing":
+                st.markdown("### Jumlah Missing Value Tiap Faktor")
                 st.dataframe(df[selected].isna().sum().rename("Jumlah Missing"))
 
-            with tab3:
+            elif subtab == "Tangani Missing":
                 df.fillna(0, inplace=True)
                 st.dataframe(df[selected].isna().sum().rename("Setelah Ditangani"))
                 st.info("Missing value diisi dengan 0 untuk menjaga integritas data.")
 
-            with tab4:
+            elif subtab == "Proporsi":
                 for col in selected:
                     df[col] = df[col] / df['Jumlah Cerai']
                 st.session_state.df = df.copy()
-                st.info("✅ Data telah diproporsikan berdasarkan jumlah perceraian.")
+                st.info("Data telah diproporsikan berdasarkan jumlah perceraian.")
                 st.dataframe(df.set_index('wilayah').head())
 
-            with tab5:
+            elif subtab == "Cek Outlier":
                 Q1 = df[selected].quantile(0.25)
                 Q3 = df[selected].quantile(0.75)
                 IQR = Q3 - Q1
@@ -395,7 +396,7 @@ elif menu == "Preprocessing":
                     axs[i].set_title(col)
                 st.pyplot(fig)
 
-            with tab6:
+            elif subtab == "Tangani Outlier":
                 for col in selected:
                     lower = Q1[col] - 1.5 * IQR[col]
                     upper = Q3[col] + 1.5 * IQR[col]
@@ -409,25 +410,21 @@ elif menu == "Preprocessing":
                     axs[i].set_title(col)
                 st.pyplot(fig)
 
-            with tab7:
-                st.markdown("### 🔗 Korelasi Pearson (Setelah Proporsi dan Outlier)")
-            
+            elif subtab == "Korelasi":
+                st.markdown("### Korelasi Pearson (Setelah Proporsi dan Outlier)")
+
                 if "df_prop" in st.session_state:
                     df_prop = st.session_state.df_prop
                 else:
-                    st.warning("❗ Data belum diproporsikan atau outlier belum ditangani.")
+                    st.warning("Data belum diproporsikan atau outlier belum ditangani.")
                     st.stop()
-            
+
                 if len(selected) >= 2:
-                    # Hitung korelasi
                     corr = df_prop.corr(method='pearson')
-            
-                    # Heatmap korelasi
                     fig, ax = plt.subplots(figsize=(8, 5))
                     sns.heatmap(corr, annot=True, cmap='coolwarm', center=0, ax=ax)
                     st.pyplot(fig)
-            
-                    # Fungsi interpretasi korelasi
+
                     def interpretasi_korelasi(r):
                         if 0.00 <= abs(r) <= 0.20:
                             return "Tidak ada korelasi"
@@ -441,28 +438,20 @@ elif menu == "Preprocessing":
                             return "Korelasi sangat kuat"
                         else:
                             return "Nilai tidak valid"
-            
-                    # Tabel kriteria korelasi
-                    st.markdown("#### 📋 Kriteria Interpretasi Koefisien Korelasi")
+
+                    st.markdown("#### Kriteria Interpretasi Koefisien Korelasi")
                     kriteria_korelasi = pd.DataFrame({
                         "Nilai r (Koefisien)": [
-                            "0,00 – 0,20",
-                            "0,21 – 0,40",
-                            "0,41 – 0,60",
-                            "0,61 – 0,80",
-                            "0,81 – 1,00"
+                            "0,00 – 0,20", "0,21 – 0,40", "0,41 – 0,60",
+                            "0,61 – 0,80", "0,81 – 1,00"
                         ],
                         "Interpretasi": [
-                            "Tidak ada korelasi",
-                            "Korelasi lemah",
-                            "Korelasi sedang",
-                            "Korelasi kuat",
-                            "Korelasi sempurna"
+                            "Tidak ada korelasi", "Korelasi lemah", "Korelasi sedang",
+                            "Korelasi kuat", "Korelasi sempurna"
                         ]
                     })
                     st.dataframe(kriteria_korelasi, use_container_width=True)
-            
-                    # Interpretasi tabel
+
                     data_interpretasi = []
                     for i in range(len(corr.columns)):
                         for j in range(i + 1, len(corr.columns)):
@@ -476,25 +465,24 @@ elif menu == "Preprocessing":
                                 "Nilai r": round(r, 3),
                                 "Interpretasi": interpretasi
                             })
-            
-                    df_interpretasi = pd.DataFrame(data_interpretasi)
-                    st.markdown("#### 📑 Tabel Interpretasi Korelasi Antar Faktor")
-                    st.dataframe(df_interpretasi, use_container_width=True)
-            
-                else:
-                    st.warning("⚠️ Silakan pilih minimal 2 faktor untuk analisis korelasi.")
 
-            with tab8:
+                    df_interpretasi = pd.DataFrame(data_interpretasi)
+                    st.markdown("#### Tabel Interpretasi Korelasi Antar Faktor")
+                    st.dataframe(df_interpretasi, use_container_width=True)
+                else:
+                    st.warning("Silakan pilih minimal 2 faktor untuk analisis korelasi.")
+
+            elif subtab == "Standarisasi":
                 X_std = StandardScaler().fit_transform(df[selected])
                 st.session_state.X_std = X_std
                 before = pd.DataFrame(df[selected]).describe().loc[['mean', 'std']]
                 after = pd.DataFrame(X_std, columns=selected).describe().loc[['mean', 'std']]
-                st.subheader("📊 Sebelum Standarisasi")
+                st.subheader("Sebelum Standarisasi")
                 st.dataframe(before)
-                st.subheader("📈 Setelah Standarisasi")
+                st.subheader("Setelah Standarisasi")
                 st.dataframe(after)
                 st.info("Standardisasi penting agar semua fitur memiliki skala yang sama.")
-
+                
 # =============================
 # PEMODELAN OPTICS
 # =============================
