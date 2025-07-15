@@ -388,7 +388,9 @@ elif menu == "Preprocessing":
                     else:
                         return "Nilai tidak valid"
 
-                # Tampilkan tabel syarat interpretasi setelah fungsi
+            if len(selected) >= 2:
+                corr = df[selected].corr(method='pearson')
+            
                 st.markdown("#### 📋 Kriteria Interpretasi Koefisien Korelasi")
                 kriteria_korelasi = pd.DataFrame({
                     "Nilai r (Koefisien)": [
@@ -410,8 +412,6 @@ elif menu == "Preprocessing":
             
                 # Interpretasi antar pasangan dalam bentuk tabel
                 data_interpretasi = []
-                
-                # Loop setiap pasangan kolom dari matriks korelasi
                 for i in range(len(corr.columns)):
                     for j in range(i + 1, len(corr.columns)):
                         kolom_1 = corr.columns[i]
@@ -424,14 +424,14 @@ elif menu == "Preprocessing":
                             "Nilai r": round(r, 3),
                             "Interpretasi": interpretasi
                         })
-                
-                # Buat DataFrame dari interpretasi
+            
                 df_interpretasi = pd.DataFrame(data_interpretasi)
-                
-                # Tampilkan di Streamlit
                 st.markdown("#### 📑 Tabel Interpretasi Korelasi Antar Faktor")
                 st.dataframe(df_interpretasi, use_container_width=True)
-
+            
+            else:
+                st.warning("⚠️ Silakan pilih minimal 2 faktor untuk analisis korelasi.")
+         
             with tab2:
                 st.markdown("### 🔍 Jumlah Missing Value Tiap Faktor")
                 st.dataframe(df[selected].isna().sum().rename("Jumlah Missing"))
