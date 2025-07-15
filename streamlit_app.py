@@ -357,10 +357,33 @@ elif menu == "Preprocessing":
                 st.pyplot(fig)
 
                 st.markdown("### 🔗 Korelasi Pearson")
-                corr = df[selected].corr(method='pearson')
-                fig, ax = plt.subplots(figsize=(8, 5))
-                sns.heatmap(corr, annot=True, cmap='coolwarm', center=0, ax=ax)
-                st.pyplot(fig)
+                    corr = df[selected].corr(method='pearson')
+                    fig, ax = plt.subplots(figsize=(8, 5))
+                    sns.heatmap(corr, annot=True, cmap='coolwarm', center=0, ax=ax)
+                    st.pyplot(fig)
+                
+                    # Interpretasi hasil korelasi (tambahan)
+                    def interpretasi_korelasi(r):
+                        if 0.00 <= abs(r) <= 0.20:
+                            return "Tidak ada korelasi"
+                        elif 0.21 <= abs(r) <= 0.40:
+                            return "Korelasi lemah"
+                        elif 0.41 <= abs(r) <= 0.60:
+                            return "Korelasi sedang"
+                        elif 0.61 <= abs(r) <= 0.80:
+                            return "Korelasi kuat"
+                        elif 0.81 <= abs(r) <= 1.00:
+                            return "Korelasi sangat kuat"
+                        else:
+                            return "Nilai tidak valid"
+                
+                    st.markdown("#### 📑 Interpretasi Korelasi:")
+                    for i in range(len(corr.columns)):
+                        for j in range(i + 1, len(corr.columns)):
+                            kolom_1 = corr.columns[i]
+                            kolom_2 = corr.columns[j]
+                            r = corr.iloc[i, j]
+                            st.markdown(f"- **{kolom_1}** vs **{kolom_2}** → *r = {r:.3f}* → {interpretasi_korelasi(r)}")
 
             with tab2:
                 st.markdown("### 🔍 Jumlah Missing Value Tiap Faktor")
