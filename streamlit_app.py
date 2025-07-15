@@ -334,12 +334,24 @@ elif menu == "Preprocessing":
         
             # Tambahkan struktur dataset di awal (dalam bentuk tabel)
             st.subheader("🧬 Struktur Dataset")
+
+            # Tentukan jenis data berdasarkan nama kolom
+            jenis_data = []
+            for kolom in df.columns:
+                if kolom.lower() in ["wilayah", "Kabupaten/Kota"]:
+                    jenis_data.append("Nominal")
+                else:
+                    jenis_data.append("Rasio")
+            
+            # Buat DataFrame struktur dataset
             df_info = pd.DataFrame({
                 "Kolom": df.columns,
                 "Jumlah Non-Null": df.notnull().sum().values,
-                "Tipe Data": df.dtypes.astype(str).values
+                "Jenis Data": jenis_data
             })
+            
             st.dataframe(df_info)
+
         
             tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
                 "Statistik & Korelasi", "Cek Missing Value", "Tangani Missing Value",
