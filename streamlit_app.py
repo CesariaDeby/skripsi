@@ -352,11 +352,10 @@ elif menu == "Preprocessing":
             
             st.dataframe(df_info)
 
-        
-            tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-                "Statistik & Korelasi", "Cek Missing Value", "Tangani Missing Value",
-                "Proporsi", "Cek Outlier", "Tangani Outlier", "Standarisasi"])
-
+            
+            tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+                "Statistik", "Cek Missing Value", "Tangani Missing Value",
+                "Proporsi", "Cek Outlier", "Tangani Outlier", "Korelasi", "Standarisasi"])
 
             with tab1:
                 st.markdown("### 📊 Statistik Deskriptif")
@@ -368,70 +367,6 @@ elif menu == "Preprocessing":
                     axs[i].set_title(col)
                 st.pyplot(fig)
 
-                st.markdown("### 🔗 Korelasi Pearson")
-                corr = df[selected].corr(method='pearson') 
-                fig, ax = plt.subplots(figsize=(8, 5))
-                sns.heatmap(corr, annot=True, cmap='coolwarm', center=0, ax=ax)
-                st.pyplot(fig)
-            
-                def interpretasi_korelasi(r):
-                    if 0.00 <= abs(r) <= 0.20:
-                        return "Tidak ada korelasi"
-                    elif 0.21 <= abs(r) <= 0.40:
-                        return "Korelasi lemah"
-                    elif 0.41 <= abs(r) <= 0.60:
-                        return "Korelasi sedang"
-                    elif 0.61 <= abs(r) <= 0.80:
-                        return "Korelasi kuat"
-                    elif 0.81 <= abs(r) <= 1.00:
-                        return "Korelasi sangat kuat"
-                    else:
-                        return "Nilai tidak valid"
-
-            if len(selected) >= 2:
-                corr = df[selected].corr(method='pearson')
-            
-                st.markdown("#### 📋 Kriteria Interpretasi Koefisien Korelasi")
-                kriteria_korelasi = pd.DataFrame({
-                    "Nilai r (Koefisien)": [
-                        "0,00 – 0,20",
-                        "0,21 – 0,40",
-                        "0,41 – 0,60",
-                        "0,61 – 0,80",
-                        "0,81 – 1,00"
-                    ],
-                    "Interpretasi": [
-                        "Tidak ada korelasi",
-                        "Korelasi lemah",
-                        "Korelasi sedang",
-                        "Korelasi kuat",
-                        "Korelasi sempurna"
-                    ]
-                })
-                st.dataframe(kriteria_korelasi, use_container_width=True)
-            
-                # Interpretasi antar pasangan dalam bentuk tabel
-                data_interpretasi = []
-                for i in range(len(corr.columns)):
-                    for j in range(i + 1, len(corr.columns)):
-                        kolom_1 = corr.columns[i]
-                        kolom_2 = corr.columns[j]
-                        r = corr.iloc[i, j]
-                        interpretasi = interpretasi_korelasi(r)
-                        pasangan = f"{kolom_1} vs {kolom_2}"
-                        data_interpretasi.append({
-                            "Pasangan Variabel": pasangan,
-                            "Nilai r": round(r, 3),
-                            "Interpretasi": interpretasi
-                        })
-            
-                df_interpretasi = pd.DataFrame(data_interpretasi)
-                st.markdown("#### 📑 Tabel Interpretasi Korelasi Antar Faktor")
-                st.dataframe(df_interpretasi, use_container_width=True)
-            
-            else:
-                st.warning("⚠️ Silakan pilih minimal 2 faktor untuk analisis korelasi.")
-         
             with tab2:
                 st.markdown("### 🔍 Jumlah Missing Value Tiap Faktor")
                 st.dataframe(df[selected].isna().sum().rename("Jumlah Missing"))
@@ -475,6 +410,81 @@ elif menu == "Preprocessing":
                 st.pyplot(fig)
 
             with tab7:
+                st.markdown("### 🔗 Korelasi Pearson (Setelah Proporsi dan Outlier)")
+            
+                if "df_prop" in st.session_state:
+                    df_prop = st.session_state.df_prop
+                else:
+                    st.warning("❗ Data belum diproporsikan atau outlier belum ditangani.")
+                    st.stop()
+            
+                if len(selected) >= 2:
+                    # Hitung korelasi
+                    corr = df_prop.corr(method='pearson')
+            
+                    # Heatmap korelasi
+                    fig, ax = plt.subplots(figsize=(8, 5))
+                    sns.heatmap(corr, annot=True, cmap='coolwarm', center=0, ax=ax)
+                    st.pyplot(fig)
+            
+                    # Fungsi interpretasi korelasi
+                    def interpretasi_korelasi(r):
+                        if 0.00 <= abs(r) <= 0.20:
+                            return "Tidak ada korelasi"
+                        elif 0.21 <= abs(r) <= 0.40:
+                            return "Korelasi lemah"
+                        elif 0.41 <= abs(r) <= 0.60:
+                            return "Korelasi sedang"
+                        elif 0.61 <= abs(r) <= 0.80:
+                            return "Korelasi kuat"
+                        elif 0.81 <= abs(r) <= 1.00:
+                            return "Korelasi sangat kuat"
+                        else:
+                            return "Nilai tidak valid"
+            
+                    # Tabel kriteria korelasi
+                    st.markdown("#### 📋 Kriteria Interpretasi Koefisien Korelasi")
+                    kriteria_korelasi = pd.DataFrame({
+                        "Nilai r (Koefisien)": [
+                            "0,00 – 0,20",
+                            "0,21 – 0,40",
+                            "0,41 – 0,60",
+                            "0,61 – 0,80",
+                            "0,81 – 1,00"
+                        ],
+                        "Interpretasi": [
+                            "Tidak ada korelasi",
+                            "Korelasi lemah",
+                            "Korelasi sedang",
+                            "Korelasi kuat",
+                            "Korelasi sempurna"
+                        ]
+                    })
+                    st.dataframe(kriteria_korelasi, use_container_width=True)
+            
+                    # Interpretasi tabel
+                    data_interpretasi = []
+                    for i in range(len(corr.columns)):
+                        for j in range(i + 1, len(corr.columns)):
+                            kolom_1 = corr.columns[i]
+                            kolom_2 = corr.columns[j]
+                            r = corr.iloc[i, j]
+                            interpretasi = interpretasi_korelasi(r)
+                            pasangan = f"{kolom_1} vs {kolom_2}"
+                            data_interpretasi.append({
+                                "Pasangan Variabel": pasangan,
+                                "Nilai r": round(r, 3),
+                                "Interpretasi": interpretasi
+                            })
+            
+                    df_interpretasi = pd.DataFrame(data_interpretasi)
+                    st.markdown("#### 📑 Tabel Interpretasi Korelasi Antar Faktor")
+                    st.dataframe(df_interpretasi, use_container_width=True)
+            
+                else:
+                    st.warning("⚠️ Silakan pilih minimal 2 faktor untuk analisis korelasi.")
+
+            with tab8:
                 X_std = StandardScaler().fit_transform(df[selected])
                 st.session_state.X_std = X_std
                 before = pd.DataFrame(df[selected]).describe().loc[['mean', 'std']]
