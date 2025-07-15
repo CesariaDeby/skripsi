@@ -162,7 +162,7 @@ st.markdown("""
 # =============================
 # HEADER DAN LOGO
 # =============================
-st.sidebar.image("logo_jatim.png", width=120)
+st.sidebar.image("logo_fix.png", width=120)
 st.markdown("""
 <h1 style='text-align: center; color: #d62828;'>
 APLIKASI PENGELOMPOKAN KABUPATEN/KOTA <br>
