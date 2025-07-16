@@ -819,88 +819,23 @@ elif menu == "Ringkasan Hasil":
             tabel = wilayah_klaster.groupby('Cluster')['wilayah'].apply(list).rename("Wilayah dalam Klaster")
             st.dataframe(tabel)
 
-            # === INTERPRETASI KARAKTERISTIK KLASTER ===
-            st.markdown("### 🧠 Interpretasi Karakteristik Klaster")
+            # === RATA-RATA FITUR PER KLASTER ===
+            st.markdown("### 📊 Rata-rata Tiap Fitur per Klaster")
             
-            def analyze_cluster_characteristics_streamlit(df_std, top_n=3, max_ratio_display=50):
-                cluster_stats = {}
-                unique_labels = df_std['cluster'].unique()
-                overall_means = df_std.drop(columns='cluster').mean()
-            
-                for label in sorted(unique_labels):
-                    cluster_data = df_std[df_std['cluster'] == label]
-            
-                    if label == -1:
-                        cluster_stats[label] = {
-                            'name': 'Noise / Outliers',
-                            'size': len(cluster_data),
-                            'dominant': []
-                        }
-                        continue
-            
-                    cluster_means = cluster_data.drop(columns='cluster').mean()
-                    dominant_features = []
-            
-                    for feature in cluster_means.index:
-                        mean_val = overall_means[feature]
-                        cluster_val = cluster_means[feature]
-            
-                        if mean_val > 1e-6 and cluster_val > mean_val:
-                            ratio = cluster_val / mean_val
-                            if np.isfinite(ratio) and 1 < ratio < max_ratio_display:
-                                dominant_features.append((feature, round(ratio, 2)))
-            
-                    dominant_features.sort(key=lambda x: x[1], reverse=True)
-            
-                    name_map = {
-                        'ekonomi': 'Faktor Ekonomi Dominan',
-                        'perselisihan dan pertengkaran': 'Perselisihan sebagai Faktor Utama',
-                        'KDRT': 'Kekerasan dalam Rumah Tangga',
-                        'meninggalkan salah satu pihak': 'Dominansi Faktor Meninggalkan',
-                        'zina': 'Dominansi Zina / Perselingkuhan'
-                    }
-                    if dominant_features:
-                        top_feature = dominant_features[0][0]
-                        cluster_name = name_map.get(top_feature, f'Dominasi {top_feature.title()}')
-                    else:
-                        cluster_name = "Tidak Ada Dominansi Jelas"
-            
-                    cluster_stats[label] = {
-                        'name': cluster_name,
-                        'size': len(cluster_data),
-                        'dominant': dominant_features[:top_n]
-                    }
-            
-                return cluster_stats
-            
-            # Ambil kolom nama fitur
             if 'df_prop' in st.session_state:
                 feature_columns = st.session_state.df_prop.columns
             else:
                 feature_columns = [f'Fitur{i}' for i in range(st.session_state.X_std.shape[1])]
             
-            # Gabungkan hasil clustering ke dataframe standar
-            X_std_df = pd.DataFrame(st.session_state.X_std.copy(), columns=feature_columns)
-            X_std_df['cluster'] = st.session_state.labels_op
+            # Gabungkan label klaster dengan data proporsi asli (bukan standar)
+            df_mean_klaster = pd.DataFrame(st.session_state.df_prop.copy())
+            df_mean_klaster['Cluster'] = st.session_state.labels_op
             
-            # Jalankan analisis interpretasi
-            stats = analyze_cluster_characteristics_streamlit(X_std_df)
+            # Hitung rata-rata tiap fitur per klaster
+            mean_table = df_mean_klaster.groupby('Cluster')[feature_columns].mean().round(3)
             
-            # Tampilkan hasil ke layar
-            for label, info in stats.items():
-                if label == -1:
-                    st.markdown(f"#### 🔴 **Noise** (n = {info['size']})")
-                    st.caption("Terdiri dari data outlier yang tidak termasuk klaster manapun.")
-                else:
-                    st.markdown(f"#### 🔵 **Cluster {label}** (n = {info['size']})")
-                    st.markdown(f"🧠 **Interpretasi**: *{info['name']}*")
-            
-                    if info['dominant']:
-                        st.markdown("**📌 Faktor Dominan:**")
-                        for feat, ratio in info['dominant']:
-                            st.markdown(f"- 🔹 **{feat.title()}**: `{ratio:.2f}×` dari rerata keseluruhan")
-                    else:
-                        st.write("📌 Tidak ada fitur dominan yang signifikan.")
+            # Tampilkan hasilnya
+            st.dataframe(mean_table, use_container_width=True)
 
 
         # Unduh Excel
