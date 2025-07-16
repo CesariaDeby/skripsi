@@ -891,10 +891,10 @@ elif menu == "Ringkasan Hasil":
             # Tampilkan hasil
             for label, info in stats.items():
                 if label == -1:
-                    st.markdown(f"#### 🔴 **Noise**)
+                    st.markdown(f"#### 🔴 **Noise** (n = {info['size']})")
                     st.caption("Terdiri dari data outlier yang tidak termasuk klaster manapun.")
                 else:
-                    st.markdown(f"#### 🔵 **Cluster {label}**)
+                    st.markdown(f"#### 🔵 **Cluster {label}** (n = {info['size']})")
                     st.markdown(f"**🧠 Interpretasi**: *{info['name']}*")
             
                     if info['dominant']:
