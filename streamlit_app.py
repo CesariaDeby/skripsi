@@ -221,29 +221,39 @@ if menu == "Beranda":
     st.markdown("""
     ### 🔄 Alur Proses OPTICS
     
-    Berikut adalah tahapan utama dalam algoritma OPTICS sebagaimana tergambar pada diagram di atas:
+    Berikut adalah tahapan utama dalam algoritma **OPTICS**:
     
-    1. **OPTICS**
+    ---
+    
+    1. ### **OPTICS**
        - Inisialisasi algoritma dengan parameter `min_samples` dan `xi`.
        - Mulai proses pemetaan kepadatan data.
     
-    2. **Deteksi Titik Inti (Core Distance)**
+    ---
+    
+    2. ### **Deteksi Titik Inti (Core Distance)**
        - Hitung jarak dari setiap titik ke tetangga ke-`min_samples`.
-       - Jika titik memiliki cukup tetangga dalam radius tertentu, maka dianggap sebagai titik inti (*core point*).
+       - Jika titik memiliki cukup tetangga dalam radius tertentu, maka dianggap sebagai **titik inti** (*core point*).
     
-    3. **Jarak Keterjangkauan dan Pengurutan Klaster**
+    ---
+    
+    3. ### **Jarak Keterjangkauan dan Pengurutan Klaster**
        - Hitung **reachability distance**: jarak aktual atau jarak ke core point yang lebih besar.
-       - Urutkan titik berdasarkan keterjangkauannya untuk membentuk urutan pemrosesan (cluster ordering).
+       - Urutkan titik berdasarkan nilai keterjangkauan untuk membentuk **cluster ordering**.
     
-    4. **Ekstraksi Klaster (Reachability Plot)**
+    ---
+    
+    4. ### **Ekstraksi Klaster (Reachability Plot)**
        - Buat **Reachability Plot** dari urutan titik tersebut.
-       - Visualisasi ini menunjukkan struktur klaster sebagai lembah (klaster padat) dan puncak (batas/noise).
+       - Visualisasi ini menunjukkan struktur klaster sebagai **lembah** (klaster padat) dan **puncak** (batas/noise).
     
-    5. **Evaluasi Hasil**
+    ---
+    
+    5. ### **Evaluasi Hasil**
        - Gunakan metrik evaluasi seperti:
-         - **Silhouette Score**: mengukur seberapa baik setiap titik berada di dalam klasternya.
-         - **Davies-Bouldin Index (DBI)**: mengukur rasio jarak intra dan antar klaster.
-       - Semakin tinggi Silhouette dan semakin rendah DBI → semakin baik hasil klasterisasi.
+         - 📈 **Silhouette Score**: Mengukur seberapa baik titik berada dalam klasternya.
+         - 📉 **Davies-Bouldin Index (DBI)**: Mengukur rasio jarak dalam dan antar klaster.
+       - Semakin **tinggi** Silhouette dan semakin **rendah** DBI → semakin **baik** hasil klasterisasi.
     """)
 
     st.markdown("""
