@@ -837,6 +837,38 @@ elif menu == "Ringkasan Hasil":
             # Tampilkan hasilnya
             st.dataframe(mean_table, use_container_width=True)
 
+        st.markdown("### 🧠 Dominasi Fitur Berdasarkan Nilai Rata-rata")
+        # Ambil nama kolom fitur
+        if 'df_prop' in st.session_state:
+            feature_columns = st.session_state.df_prop.columns
+        else:
+            feature_columns = [f'Fitur{i}' for i in range(st.session_state.X_std.shape[1])]
+        
+        # Gabungkan label klaster dengan data proporsi
+        df_prop = st.session_state.df_prop.copy()
+        df_prop['Cluster'] = st.session_state.labels_op
+        
+        # Hitung mean tiap fitur per klaster
+        mean_per_cluster = df_prop.groupby('Cluster')[feature_columns].mean().round(3)
+        
+        # Interpretasi berdasarkan nilai mean tertinggi
+        for label, row in mean_per_cluster.iterrows():
+            if label == -1:
+                st.markdown(f"#### 🔴 **Noise (n = {(df_prop['Cluster'] == -1).sum()})**")
+                st.caption("Terdiri dari data outlier yang tidak termasuk klaster manapun.")
+                continue
+            
+            st.markdown(f"#### 🔵 **Cluster {label} (n = {(df_prop['Cluster'] == label).sum()})**")
+        
+            top_feature = row.idxmax()
+            top_value = row.max()
+        
+            st.markdown(f"**🧠 Interpretasi:** *Fitur dominan adalah `{top_feature.title()}` dengan nilai rata-rata {top_value:.3f}*")
+            
+            st.markdown("**📊 Nilai rata-rata seluruh fitur:**")
+            st.dataframe(row.to_frame(name='Rata-rata').T)
+
+
 
         # Unduh Excel
         if 'wilayah' in df_result.columns:
