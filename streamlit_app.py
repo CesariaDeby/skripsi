@@ -819,17 +819,17 @@ elif menu == "Ringkasan Hasil":
             tabel = wilayah_klaster.groupby('Cluster')['wilayah'].apply(list).rename("Wilayah dalam Klaster")
             st.dataframe(tabel)
 
-            # Interpretasi Karakteristik Tiap Klaster
+            # === INTERPRETASI KARAKTERISTIK KLASTER ===
             st.markdown("### 🧠 Interpretasi Karakteristik Klaster")
-    
+            
             def analyze_cluster_characteristics_streamlit(df_std, top_n=3):
                 cluster_stats = {}
                 unique_labels = df_std['cluster'].unique()
                 overall_means = df_std.drop(columns='cluster').mean()
-    
+            
                 for label in sorted(unique_labels):
                     cluster_data = df_std[df_std['cluster'] == label]
-    
+            
                     if label == -1:
                         cluster_stats[label] = {
                             'name': 'Noise / Outliers',
@@ -838,65 +838,63 @@ elif menu == "Ringkasan Hasil":
                             'dominant': []
                         }
                         continue
-    
+            
                     cluster_means = cluster_data.drop(columns='cluster').mean()
-    
+            
                     dominant_features = []
                     for feature in cluster_means.index:
                         if overall_means[feature] != 0 and cluster_means[feature] > overall_means[feature]:
                             ratio = cluster_means[feature] / overall_means[feature]
-                            dominant_features.append((feature, ratio))
-    
+                            if np.isfinite(ratio):
+                                dominant_features.append((feature, round(ratio, 2)))
+            
                     dominant_features.sort(key=lambda x: x[1], reverse=True)
-    
-                    # Nama deskriptif
+            
+                    name_map = {
+                        'ekonomi': 'Faktor Ekonomi Dominan',
+                        'perselisihan dan pertengkaran': 'Perselisihan sebagai Faktor Utama',
+                        'KDRT': 'Kekerasan dalam Rumah Tangga',
+                        'meninggalkan salah satu pihak': 'Dominansi Faktor Meninggalkan',
+                        'zina': 'Dominansi Zina / Perselingkuhan'
+                    }
                     if dominant_features:
                         top_feature = dominant_features[0][0]
-                        name_map = {
-                            'ekonomi': 'Faktor Ekonomi Dominan',
-                            'perselisihan dan pertengkaran': 'Perselisihan sebagai Faktor Utama',
-                            'KDRT': 'Kekerasan dalam Rumah Tangga',
-                            'meninggalkan salah satu pihak': 'Dominansi Faktor Meninggalkan',
-                            'zina': 'Dominansi Zina / Perselingkuhan'
-                        }
-                        cluster_name = name_map.get(top_feature, f'Dominasi {top_feature}')
+                        cluster_name = name_map.get(top_feature, f'Dominasi {top_feature.title()}')
                     else:
                         cluster_name = "Tidak Ada Dominansi Jelas"
-    
+            
                     cluster_stats[label] = {
                         'name': cluster_name,
                         'size': len(cluster_data),
                         'percentage': (len(cluster_data) / len(df_std)) * 100,
                         'dominant': dominant_features[:top_n]
                     }
-    
+            
                 return cluster_stats
-
-        # Tentukan nama kolom fitur dari df_prop jika tersedia
+            
+            # Buat dataframe hasil clustering
             if 'df_prop' in st.session_state:
                 feature_columns = st.session_state.df_prop.columns
             else:
                 feature_columns = [f'Fitur{i}' for i in range(st.session_state.X_std.shape[1])]
             
-            # Gabungkan hasil standardisasi dengan label klaster
             X_std_df = pd.DataFrame(st.session_state.X_std.copy(), columns=feature_columns)
-            X_std_df['cluster'] = labels
-            
-            # Analisis karakteristik tiap klaster
+            X_std_df['cluster'] = st.session_state.labels_op
             stats = analyze_cluster_characteristics_streamlit(X_std_df)
             
-            # Tampilkan hasil interpretasi tiap klaster
+            # Tampilkan interpretasi per klaster
             for label, info in stats.items():
                 if label == -1:
-                    st.markdown(f"#### 🔴 Noise (n = {info['size']}, {info['percentage']:.1f}%)")
-                    st.write("Terdiri dari data outlier yang tidak termasuk klaster manapun.")
+                    st.markdown(f"#### 🔴 **Noise** (n = {info['size']}, {info['percentage']:.1f}%)")
+                    st.caption("Terdiri dari data outlier yang tidak termasuk klaster manapun.")
                 else:
-                    st.markdown(f"#### 🔵 Cluster {label} (n = {info['size']}, {info['percentage']:.1f}%)")
-                    st.write(f"**Interpretasi**: {info['name']}")
+                    st.markdown(f"#### 🔵 **Cluster {label}** (n = {info['size']}, {info['percentage']:.1f}%)")
+                    st.markdown(f"**🧠 Interpretasi**: *{info['name']}*")
+            
                     if info['dominant']:
-                        st.markdown("**Faktor Dominan:**")
+                        st.markdown("**📌 Faktor Dominan:**")
                         for feat, ratio in info['dominant']:
-                            st.write(f"- `{feat}`: {ratio:.2f}× dari rerata keseluruhan")
+                            st.markdown(f"- 🔹 **{feat.title()}**: `{ratio:.2f}×` dari rerata keseluruhan")
                     else:
                         st.write("Tidak ada fitur dominan yang signifikan.")
             
