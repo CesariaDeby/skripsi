@@ -162,7 +162,7 @@ st.markdown("""
 # =============================
 # HEADER DAN LOGO
 # =============================
-st.sidebar.image("logo_fix.png", width=200)
+st.sidebar.image("logo_fix.png", width=250)
 st.markdown("""
 <h1 style='text-align: center; color: #d62828;'>
 APLIKASI PENGELOMPOKAN KABUPATEN/KOTA <br>
