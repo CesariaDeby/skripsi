@@ -834,7 +834,6 @@ elif menu == "Ringkasan Hasil":
                         cluster_stats[label] = {
                             'name': 'Noise / Outliers',
                             'size': len(cluster_data),
-                            'percentage': (len(cluster_data) / len(df_std)) * 100,
                             'dominant': []
                         }
                         continue
@@ -869,7 +868,6 @@ elif menu == "Ringkasan Hasil":
                     cluster_stats[label] = {
                         'name': cluster_name,
                         'size': len(cluster_data),
-                        'percentage': (len(cluster_data) / len(df_std)) * 100,
                         'dominant': dominant_features[:top_n]
                     }
             
@@ -888,21 +886,22 @@ elif menu == "Ringkasan Hasil":
             # Jalankan analisis interpretasi
             stats = analyze_cluster_characteristics_streamlit(X_std_df)
             
-            # Tampilkan hasil
+            # Tampilkan hasil ke layar
             for label, info in stats.items():
                 if label == -1:
                     st.markdown(f"#### 🔴 **Noise** (n = {info['size']})")
                     st.caption("Terdiri dari data outlier yang tidak termasuk klaster manapun.")
                 else:
                     st.markdown(f"#### 🔵 **Cluster {label}** (n = {info['size']})")
-                    st.markdown(f"**🧠 Interpretasi**: *{info['name']}*")
+                    st.markdown(f"🧠 **Interpretasi**: *{info['name']}*")
             
                     if info['dominant']:
                         st.markdown("**📌 Faktor Dominan:**")
                         for feat, ratio in info['dominant']:
-                            st.markdown(f"- 🔹 **{feat.title()}**: `{ratio:,.2f}×` dari rerata keseluruhan")
+                            st.markdown(f"- 🔹 **{feat.title()}**: `{ratio:.2f}×` dari rerata keseluruhan")
                     else:
-                        st.write("Tidak ada fitur dominan yang signifikan.")
+                        st.write("📌 Tidak ada fitur dominan yang signifikan.")
+
 
         # Unduh Excel
         if 'wilayah' in df_result.columns:
