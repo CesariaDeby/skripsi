@@ -380,6 +380,7 @@ elif menu == "Preprocessing":
                 st.subheader("📐 Data dalam Bentuk Proporsi")
                 st.info("Data telah diproporsikan berdasarkan jumlah perceraian.")
                 st.dataframe(df.set_index('wilayah').head())
+                st.session_state.X_ = st.session_state.df_prop
 
             elif subtab == "Cek Outlier":
                 st.subheader("🚨 Deteksi Outlier")
@@ -870,14 +871,21 @@ elif menu == "Ringkasan Hasil":
                     }
     
                 return cluster_stats
-    
-            # Gabungkan X_std_df dengan label
-            X_std_df = st.session_state.X_std.copy()
-            X_std_df = pd.DataFrame(X_std_df, columns=st.session_state.X_.columns)
+
+        # Tentukan nama kolom fitur dari df_prop jika tersedia
+            if 'df_prop' in st.session_state:
+                feature_columns = st.session_state.df_prop.columns
+            else:
+                feature_columns = [f'Fitur{i}' for i in range(st.session_state.X_std.shape[1])]
+            
+            # Gabungkan hasil standardisasi dengan label klaster
+            X_std_df = pd.DataFrame(st.session_state.X_std.copy(), columns=feature_columns)
             X_std_df['cluster'] = labels
-    
+            
+            # Analisis karakteristik tiap klaster
             stats = analyze_cluster_characteristics_streamlit(X_std_df)
-    
+            
+            # Tampilkan hasil interpretasi tiap klaster
             for label, info in stats.items():
                 if label == -1:
                     st.markdown(f"#### 🔴 Noise (n = {info['size']}, {info['percentage']:.1f}%)")
@@ -891,7 +899,6 @@ elif menu == "Ringkasan Hasil":
                             st.write(f"- `{feat}`: {ratio:.2f}× dari rerata keseluruhan")
                     else:
                         st.write("Tidak ada fitur dominan yang signifikan.")
-
             
         # Unduh Excel
         if 'wilayah' in df_result.columns:
